@@ -15,23 +15,30 @@ for Mini Apps — Render provides it.
 | `GARARIDE_DB` | no | SQLite path. On Render use the mounted disk, e.g. `/var/data/gararide.sqlite3`. |
 | `GARARIDE_CORRIDOR` | no | Stop-list CSV. Default `seed/corridor_ayat49.csv`. |
 
-## Render setup (Docker)
+## Render setup (native Python service)
 
-The service builds from the repo's `Dockerfile` (a multi-stage build: Node
-compiles the Mini App, then a Python image serves the API + static frontend and
-runs the bot in one process). No dashboard build/start command is needed — the
-container defines them. Health check: `/healthz`.
+The existing service is a native **Python** web service (Build + Start commands,
+no Docker). Reuse it — the settings to set:
 
-Reuse the existing instance:
-1. Runtime must be **Docker** (Settings → the service reads `./Dockerfile`).
-2. Set the env vars in the table above. `BOT_TOKEN` and `WEBAPP_URL` from the old
-   demo carry over unchanged (same names). Add `GARARIDE_ADMINS` (your Telegram
-   id) and keep `GARARIDE_DB` on the disk.
-3. Attach a **1 GB persistent disk at `/var/data`** so the SQLite DB survives
-   redeploys — without it every deploy wipes all users, trips and bookings.
-4. Deploy. Each push to the connected branch rebuilds automatically.
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `uvicorn gararide.server:app --host 0.0.0.0 --port $PORT`
+- **Health Check Path:** `/healthz`
 
-`render.yaml` describes this exact service if you ever recreate it as a Blueprint.
+The Mini App (`frontend/dist`) is **pre-built and committed** to the repo, because
+Render's Python builder has no Node. `gararide/server.py` serves that directory at
+`/`. After any frontend change, rebuild it locally (`cd frontend && npm run build`)
+and commit `frontend/dist` before deploying.
+
+Env vars: `BOT_TOKEN` and `WEBAPP_URL` carry over from the old demo (same names).
+Add `GARARIDE_ADMINS` (your Telegram id). Set `GARARIDE_DB` to the disk path.
+
+**Persistent disk:** attach a 1 GB disk at `/var/data` and set
+`GARARIDE_DB=/var/data/gararide.sqlite3`. Render disks require a **paid instance
+(Starter)** — the free tier has no disk and also spins down when idle (which stops
+the bot), so the free tier is for testing only, not a live pilot.
+
+A repo `Dockerfile` also exists for hosts that prefer containers; Render's native
+service ignores it. `render.yaml` describes this service as a Blueprint.
 
 ## BotFather / Telegram setup
 

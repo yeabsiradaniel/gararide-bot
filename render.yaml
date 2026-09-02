@@ -1,16 +1,17 @@
 services:
   - type: web
     name: gararide
-    runtime: docker
-    plan: free
-    dockerfilePath: ./Dockerfile
+    runtime: python
+    plan: starter          # free has no persistent disk; the SQLite DB needs one
+    buildCommand: pip install -r requirements.txt   # the Mini App (frontend/dist) is pre-built and committed
+    startCommand: uvicorn gararide.server:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /healthz
     envVars:
-      - key: BOT_TOKEN      # from @BotFather; also validates Mini App initData
+      - key: BOT_TOKEN       # from @BotFather; also validates Mini App initData
         sync: false
-      - key: WEBAPP_URL     # this service's public https URL
+      - key: WEBAPP_URL      # this service's public https URL
         sync: false
-      - key: GARARIDE_ADMINS  # comma-separated Telegram ids allowed into /admin
+      - key: GARARIDE_ADMINS # comma-separated Telegram ids allowed into /admin
         sync: false
       - key: GARARIDE_DB
         value: /var/data/gararide.sqlite3
