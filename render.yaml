@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: gararide
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: BOT_TOKEN      # from @BotFather; also validates Mini App initData
+        sync: false
+      - key: WEBAPP_URL     # this service's public https URL
+        sync: false
+      - key: GARARIDE_ADMINS  # comma-separated Telegram ids allowed into /admin
+        sync: false
+      - key: GARARIDE_DB
+        value: /var/data/gararide.sqlite3
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1

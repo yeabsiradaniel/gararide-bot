@@ -1,0 +1,13 @@
+.git
+**/__pycache__
+*.pyc
+.pytest_cache
+node_modules
+frontend/node_modules
+frontend/dist
+tests
+*.sqlite3
+*.log
+run_local.ps1
+cloudflared.exe
+seed/allowlist_test.csv

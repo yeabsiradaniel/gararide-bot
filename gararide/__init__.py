@@ -1,0 +1,1 @@
+"""GaraRIde pilot bot."""
