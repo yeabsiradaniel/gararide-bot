@@ -5,6 +5,7 @@ from fastapi import Depends, FastAPI, Request
 
 from ..config import CONFIG
 from ..places import all_places
+from ..users import reconcile_role
 from . import admin, driver, rider, routes, saved
 from .deps import current_user, get_conn
 from .schemas import Me, Place
@@ -22,7 +23,9 @@ def create_app(conn, bot_token: str, admin_ids=frozenset(), lifespan=None) -> Fa
     app.include_router(admin.router)
 
     @app.get("/me", response_model=Me)
-    def me(request: Request, user=Depends(current_user)):
+    def me(request: Request, user=Depends(current_user), conn=Depends(get_conn)):
+        # Catch up a rider who was desk-verified as a driver after registering.
+        user = reconcile_role(conn, user["telegram_id"]) or user
         return Me(
             telegram_id=user["telegram_id"], full_name=user["full_name"],
             role=user["role"],

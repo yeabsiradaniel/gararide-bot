@@ -178,6 +178,31 @@ def register_rider(conn: sqlite3.Connection, telegram_id: int, phone: str,
     return get_user(conn, telegram_id)
 
 
+def reconcile_role(conn: sqlite3.Connection, telegram_id: int) -> sqlite3.Row | None:
+    """Promote a registered rider to driver if their phone is now on the driver
+    allowlist. Registration happens once, but a rider can be desk-verified later
+    (e.g. an admin adds them from Ops) — this catches up their role the next time
+    they open the bot or the app. The allowlist is authoritative for drivers."""
+    user = get_user(conn, telegram_id)
+    if user is None or user["role"] == "driver":
+        return user
+    entry = lookup_allowlist(conn, user["phone"])
+    if entry is None or entry["role"] != "driver":
+        return user
+    if entry["claimed_by"] not in (None, telegram_id):
+        return user  # this driver slot belongs to another account
+    conn.execute(
+        "UPDATE users SET role='driver', tower=?, car_model=?, plate=?,"
+        "  is_female=?, car_seats=? WHERE telegram_id=?",
+        (entry["tower"], entry["car_model"], entry["plate"], entry["is_female"],
+         entry["car_seats"], telegram_id),
+    )
+    conn.execute("UPDATE allowlist SET claimed_by=? WHERE phone=?",
+                 (telegram_id, user["phone"]))
+    conn.commit()
+    return get_user(conn, telegram_id)
+
+
 def set_women_only(conn: sqlite3.Connection, telegram_id: int,
                    women_only: bool, women_present: bool) -> None:
     conn.execute(

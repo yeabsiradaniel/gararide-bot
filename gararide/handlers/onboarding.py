@@ -7,8 +7,8 @@ from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, U
 from telegram.ext import (CommandHandler, ContextTypes, MessageHandler, filters)
 
 from .. import strings_am as S
-from ..users import (NotAllowlisted, get_user, lookup_allowlist, register,
-                     register_rider)
+from ..users import (NotAllowlisted, get_user, lookup_allowlist, reconcile_role,
+                     register, register_rider)
 from .launch import show_launch
 
 log = logging.getLogger(__name__)
@@ -18,6 +18,8 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     conn = context.bot_data["conn"]
     user = get_user(conn, update.effective_user.id)
     if user is not None:
+        # A rider who has since been desk-verified as a driver gets promoted here.
+        reconcile_role(conn, update.effective_user.id)
         await show_launch(update, context)
         return
 

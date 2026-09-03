@@ -83,6 +83,21 @@ def test_non_admin_cannot_add_a_driver(client):
     assert r.status_code == 403
 
 
+def test_rider_added_to_the_roster_is_promoted_on_next_app_open(client):
+    # 2001 registered as a rider (phone 0999999999). Admin now desk-verifies that
+    # same phone as a driver — the rider should become a driver next time /me loads.
+    _, c = client
+    assert c.get("/me", headers=_auth(2001)).json()["role"] == "rider"
+    r = c.post("/admin/drivers", headers=_auth(1001), json={
+        "phone": "0999999999", "full_name": "Promoted", "tower": "C3",
+        "car_model": "Vitz", "plate": "3-AA 9", "car_seats": 4})
+    assert r.status_code == 201
+    me = c.get("/me", headers=_auth(2001)).json()
+    assert me["role"] == "driver" and me["car_seats"] == 4 and me["tower"] == "C3"
+    # and they can now use a driver-only endpoint
+    assert c.get("/trips/mine", headers=_auth(2001)).status_code == 200
+
+
 def test_admin_removes_a_pending_driver(client):
     _, c = client
     c.post("/admin/drivers", headers=_auth(1001), json={
