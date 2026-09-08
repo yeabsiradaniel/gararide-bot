@@ -6,12 +6,19 @@ import logging
 from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (CommandHandler, ContextTypes, MessageHandler, filters)
 
-from .. import strings_am as S
+from ..copy import strings as copy
 from ..users import (NotAllowlisted, get_user, lookup_allowlist, reconcile_role,
                      register, register_rider)
 from .launch import show_launch
 
 log = logging.getLogger(__name__)
+
+
+def _detect_lang(update: Update) -> str:
+    """A sensible starting language from the Telegram client; the user can flip
+    it any time from the Mini App's language button."""
+    code = (update.effective_user.language_code or "").lower()
+    return "en" if code.startswith("en") else "am"
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -23,6 +30,9 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await show_launch(update, context)
         return
 
+    lang = _detect_lang(update)
+    context.user_data["signup_lang"] = lang
+    S = copy(lang)
     arg = (context.args or ["rdr"])[0]
     context.user_data["signup_role"] = "driver" if arg.startswith("drv") else "rider"
     text = S.WELCOME_DRIVER if arg.startswith("drv") else S.WELCOME_RIDER
@@ -34,6 +44,8 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def on_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     conn = context.bot_data["conn"]
+    lang = context.user_data.get("signup_lang") or _detect_lang(update)
+    S = copy(lang)
     contact = update.message.contact
     if contact.user_id != update.effective_user.id:
         await update.message.reply_text(S.NOT_ALLOWLISTED,
@@ -45,7 +57,7 @@ async def on_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     if lookup_allowlist(conn, contact.phone_number) is not None:
         try:
             register(conn, telegram_id=update.effective_user.id,
-                     phone=contact.phone_number)
+                     phone=contact.phone_number, lang=lang)
         except NotAllowlisted:  # the driver slot is already claimed by another account
             await update.message.reply_text(S.NOT_ALLOWLISTED,
                                             reply_markup=ReplyKeyboardRemove())
@@ -53,7 +65,7 @@ async def on_contact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     else:
         register_rider(conn, telegram_id=update.effective_user.id,
                        phone=contact.phone_number,
-                       full_name=update.effective_user.full_name)
+                       full_name=update.effective_user.full_name, lang=lang)
     await update.message.reply_text(S.REGISTERED, reply_markup=ReplyKeyboardRemove())
     await show_launch(update, context)
 

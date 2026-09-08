@@ -1,11 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, ApiError } from './api'
 import type { Me } from './api'
-import { backButton, initTelegram } from './telegram'
+import { backButton, haptic, initTelegram } from './telegram'
 import { NavCtx } from './nav'
 import type { Nav, Screen } from './nav'
 import { ErrorView, Loader, Screen as ScreenWrap } from './ui'
-import { S } from './strings'
+import { S, setActiveLang } from './strings'
+import type { Lang } from './strings'
+
+const LANG_KEY = 'gararide_lang'
+
+function LangFab({ lang, onToggle }: { lang: Lang; onToggle: () => void }) {
+  // Shows the language you'd switch TO.
+  return (
+    <button className="lang-fab" onClick={onToggle} aria-label="Change language">
+      🌐 {lang === 'am' ? 'EN' : 'አማ'}
+    </button>
+  )
+}
 import DriverHome from './screens/DriverHome'
 import RiderHome from './screens/RiderHome'
 import PostTrip from './screens/PostTrip'
@@ -37,12 +49,33 @@ export default function App() {
   const [phase, setPhase] = useState<'loading' | 'ready' | 'register' | 'error'>('loading')
   const [err, setErr] = useState<string>()
   const [stack, setStack] = useState<Screen[]>([])
+  const [lang, setLangState] = useState<Lang>(() => {
+    const saved = (localStorage.getItem(LANG_KEY) as Lang) || 'am'
+    setActiveLang(saved)  // apply before first paint
+    return saved
+  })
+
+  const applyLang = useCallback((next: Lang, persist: boolean) => {
+    setActiveLang(next)
+    localStorage.setItem(LANG_KEY, next)
+    setLangState(next)
+    if (persist) api.setLang(next).catch(() => { /* not registered yet — ignore */ })
+  }, [])
+
+  const toggleLang = useCallback(() => {
+    haptic()
+    applyLang(lang === 'am' ? 'en' : 'am', true)
+  }, [lang, applyLang])
 
   const boot = useCallback(() => {
     setPhase('loading')
     api.me()
       .then((m) => {
         setMe(m)
+        // The server-stored preference wins on load, so a returning user keeps it.
+        if (m.lang && m.lang !== (localStorage.getItem(LANG_KEY) as Lang)) {
+          applyLang(m.lang, false)
+        }
         setStack([{ name: m.role === 'driver' ? 'driverHome' : 'riderHome' }])
         setPhase('ready')
       })
@@ -50,7 +83,7 @@ export default function App() {
         if (e instanceof ApiError && e.status === 404) setPhase('register')
         else { setErr(e?.message); setPhase('error') }
       })
-  }, [])
+  }, [applyLang])
 
   useEffect(() => { initTelegram(); boot() }, [boot])
 
@@ -69,9 +102,11 @@ export default function App() {
     if (canBack) { backButton.show(back); return () => backButton.hide(back) }
   }, [canBack, back])
 
-  if (phase === 'loading') return <div className="app"><Loader /></div>
-  if (phase === 'error') return <div className="app"><ErrorView msg={err} onRetry={boot} /></div>
-  if (phase === 'register') return <div className="app"><Register /></div>
+  const fab = <LangFab lang={lang} onToggle={toggleLang} />
+
+  if (phase === 'loading') return <div className="app">{fab}<Loader /></div>
+  if (phase === 'error') return <div className="app">{fab}<ErrorView msg={err} onRetry={boot} /></div>
+  if (phase === 'register') return <div className="app">{fab}<Register /></div>
 
   const current = stack[stack.length - 1]
   const render = (s: Screen) => {
@@ -95,7 +130,7 @@ export default function App() {
 
   return (
     <NavCtx.Provider value={nav}>
-      <div className="app">{render(current)}</div>
+      <div className="app">{fab}{render(current)}</div>
     </NavCtx.Provider>
   )
 }

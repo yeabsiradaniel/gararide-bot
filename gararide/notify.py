@@ -5,7 +5,7 @@ import logging
 import sqlite3
 from datetime import datetime
 
-from . import strings_am as S
+from .copy import strings as copy
 from .fmt import fmt_money, fmt_person, fmt_when
 from .places import place_by_id
 from .trips import get_trip
@@ -21,7 +21,12 @@ def trip_card(conn: sqlite3.Connection, booking_id: int, for_role: str) -> str:
     driver = get_user(conn, trip["driver_id"])
     rider = get_user(conn, booking["rider_id"])
     depart = datetime.fromisoformat(trip["depart_at"])
-    dest = place_by_id(conn, booking["to_place_id"])["name_am"]
+    # Localize to whoever receives this card.
+    recipient = rider if for_role == "rider" else driver
+    lang = recipient["lang"] if recipient else "am"
+    S = copy(lang)
+    place = place_by_id(conn, booking["to_place_id"])
+    dest = place["name_en"] if lang == "en" else place["name_am"]
 
     if for_role == "rider":
         return "\n".join([

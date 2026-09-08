@@ -15,6 +15,7 @@ class Me(BaseModel):
     women_only: bool
     women_present: bool
     is_admin: bool
+    lang: str
 
 
 class Place(BaseModel):

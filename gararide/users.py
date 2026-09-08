@@ -127,7 +127,8 @@ def get_user(conn: sqlite3.Connection, telegram_id: int) -> sqlite3.Row | None:
     ).fetchone()
 
 
-def register(conn: sqlite3.Connection, telegram_id: int, phone: str) -> sqlite3.Row:
+def register(conn: sqlite3.Connection, telegram_id: int, phone: str,
+             lang: str = "am") -> sqlite3.Row:
     existing = get_user(conn, telegram_id)
     if existing is not None:
         return existing
@@ -143,11 +144,11 @@ def register(conn: sqlite3.Connection, telegram_id: int, phone: str) -> sqlite3.
     conn.execute(
         "INSERT INTO users"
         " (telegram_id, phone, full_name, tower, role, car_model, plate,"
-        "  is_female, car_seats, created_at)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "  is_female, car_seats, created_at, lang)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (telegram_id, normalise_phone(phone), entry["full_name"], entry["tower"],
          entry["role"], entry["car_model"], entry["plate"], is_female,
-         entry["car_seats"], datetime.now().isoformat(timespec="seconds")),
+         entry["car_seats"], datetime.now().isoformat(timespec="seconds"), lang),
     )
     conn.execute("UPDATE allowlist SET claimed_by = ? WHERE phone = ?",
                  (telegram_id, normalise_phone(phone)))
@@ -156,7 +157,7 @@ def register(conn: sqlite3.Connection, telegram_id: int, phone: str) -> sqlite3.
 
 
 def register_rider(conn: sqlite3.Connection, telegram_id: int, phone: str,
-                   full_name: str) -> sqlite3.Row:
+                   full_name: str, lang: str = "am") -> sqlite3.Row:
     """Self-registration for riders.
 
     Riders are NOT desk-verified — they arrive via the Telegram link (QR
@@ -169,13 +170,20 @@ def register_rider(conn: sqlite3.Connection, telegram_id: int, phone: str,
         return existing
     conn.execute(
         "INSERT INTO users"
-        " (telegram_id, phone, full_name, tower, role, created_at)"
-        " VALUES (?, ?, ?, '', 'rider', ?)",
+        " (telegram_id, phone, full_name, tower, role, created_at, lang)"
+        " VALUES (?, ?, ?, '', 'rider', ?, ?)",
         (telegram_id, normalise_phone(phone), full_name,
-         datetime.now().isoformat(timespec="seconds")),
+         datetime.now().isoformat(timespec="seconds"), lang),
     )
     conn.commit()
     return get_user(conn, telegram_id)
+
+
+def set_lang(conn: sqlite3.Connection, telegram_id: int, lang: str) -> None:
+    """Persist the user's language ('am' or 'en'); drives both the bot and app."""
+    conn.execute("UPDATE users SET lang = ? WHERE telegram_id = ?",
+                 (lang if lang in ("am", "en") else "am", telegram_id))
+    conn.commit()
 
 
 def reconcile_role(conn: sqlite3.Connection, telegram_id: int) -> sqlite3.Row | None:

@@ -34,7 +34,7 @@ export interface Me {
   telegram_id: number; full_name: string; role: 'driver' | 'rider'
   tower: string | null; car_model: string | null; plate: string | null
   car_seats: number | null; women_only: boolean; women_present: boolean
-  is_admin: boolean
+  is_admin: boolean; lang: 'am' | 'en'
 }
 export interface Place { id: number; slug: string; name_am: string; name_en: string; sort_order: number }
 export interface DropoffOptions { intermediate: Place[]; destination: Place }
@@ -64,6 +64,7 @@ export interface NewDriver {
 
 export const api = {
   me: () => req<Me>('/me'),
+  setLang: (lang: 'am' | 'en') => post<null>('/me/lang', { lang }),
   places: () => req<Place[]>('/places'),
   // driver
   dropoffOptions: (destId: number) => req<DropoffOptions>(`/trips/${destId}/dropoff-options`),

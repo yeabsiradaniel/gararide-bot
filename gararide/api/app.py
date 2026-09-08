@@ -3,12 +3,18 @@ from __future__ import annotations
 
 from fastapi import Depends, FastAPI, Request
 
+from pydantic import BaseModel
+
 from ..config import CONFIG
 from ..places import all_places
-from ..users import reconcile_role
+from ..users import reconcile_role, set_lang
 from . import admin, driver, rider, routes, saved
 from .deps import current_user, get_conn
 from .schemas import Me, Place
+
+
+class LangIn(BaseModel):
+    lang: str
 
 
 def create_app(conn, bot_token: str, admin_ids=frozenset(), lifespan=None) -> FastAPI:
@@ -33,7 +39,13 @@ def create_app(conn, bot_token: str, admin_ids=frozenset(), lifespan=None) -> Fa
             car_model=user["car_model"], plate=user["plate"],
             car_seats=user["car_seats"], women_only=bool(user["women_only"]),
             women_present=bool(user["women_present"]),
-            is_admin=user["telegram_id"] in request.app.state.admin_ids)
+            is_admin=user["telegram_id"] in request.app.state.admin_ids,
+            lang=user["lang"])
+
+    @app.post("/me/lang", status_code=204)
+    def me_lang(body: LangIn, user=Depends(current_user), conn=Depends(get_conn)):
+        # Drives both the bot's messages and the Mini App's copy.
+        set_lang(conn, user["telegram_id"], body.lang)
 
     @app.get("/places", response_model=list[Place])
     def places(user=Depends(current_user), conn=Depends(get_conn)):

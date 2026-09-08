@@ -11,7 +11,8 @@ from telegram import (InlineKeyboardButton, InlineKeyboardMarkup, Update,
                       WebAppInfo)
 from telegram.ext import CommandHandler, ContextTypes
 
-from .. import strings_am as S
+from ..copy import strings as copy
+from ..users import get_user
 
 
 def _webapp_url() -> str:
@@ -21,6 +22,8 @@ def _webapp_url() -> str:
 
 
 async def show_launch(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user = get_user(context.bot_data["conn"], update.effective_user.id)
+    S = copy(user["lang"] if user else None)
     markup = InlineKeyboardMarkup([[
         InlineKeyboardButton(S.OPEN_APP, web_app=WebAppInfo(url=_webapp_url()))]])
     message = update.message or (

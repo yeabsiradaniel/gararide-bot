@@ -48,7 +48,8 @@ CREATE TABLE IF NOT EXISTS users (
     women_only    INTEGER NOT NULL DEFAULT 0,
     women_present INTEGER NOT NULL DEFAULT 0,
     created_at    TEXT NOT NULL,
-    active        INTEGER NOT NULL DEFAULT 1
+    active        INTEGER NOT NULL DEFAULT 1,
+    lang          TEXT NOT NULL DEFAULT 'am'
 );
 
 CREATE TABLE IF NOT EXISTS trips (
@@ -154,4 +155,13 @@ def connect(path: str) -> sqlite3.Connection:
 
 def init_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    _migrate(conn)
     conn.commit()
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Add columns to tables that predate them (CREATE TABLE IF NOT EXISTS never
+    alters an existing table)."""
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(users)")}
+    if "lang" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN lang TEXT NOT NULL DEFAULT 'am'")
