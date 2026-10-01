@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class Me(BaseModel):
     telegram_id: int
     full_name: str
+    phone: str
     role: str
     tower: str | None
     car_model: str | None
@@ -16,6 +17,7 @@ class Me(BaseModel):
     women_present: bool
     is_admin: bool
     lang: str
+    consented: bool
 
 
 class Place(BaseModel):

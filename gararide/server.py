@@ -8,6 +8,7 @@ answers) without one. Reuses a single SQLite connection across both.
 """
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import logging
 import os
@@ -21,7 +22,8 @@ from .places import seed_corridor
 
 log = logging.getLogger("gararide.server")
 
-conn = connect(os.environ.get("GARARIDE_DB", "gararide.sqlite3"))
+_db_path = os.environ.get("GARARIDE_DB", "gararide.sqlite3")
+conn = connect(_db_path)
 init_schema(conn)
 seed_corridor(conn, os.environ.get("GARARIDE_CORRIDOR", "seed/corridor_ayat49.csv"))
 
@@ -43,6 +45,10 @@ async def _lifespan(app):
             await bot.initialize()
             await bot.start()
             await bot.updater.start_polling(allowed_updates=Update.ALL_TYPES)
+            # Hand the running bot + its loop to the API so endpoints can push
+            # Telegram messages (booking confirmations, cancellations, etc.).
+            app.state.tg = bot.bot
+            app.state.loop = asyncio.get_running_loop()
             log.info("bot polling started")
         except Exception as exc:  # a bot hiccup must not take down the Mini App
             log.warning("bot failed to start, serving API only: %s", exc)
@@ -58,6 +64,8 @@ async def _lifespan(app):
 
 
 app = create_app(conn, _bot_token, admin_ids=_admins, lifespan=_lifespan)
+# Production: hand out a fresh connection per request (see deps.get_conn).
+app.state.db_path = _db_path
 
 # Serve the built Mini App (Plan 2 produces frontend/dist). Mounted last so the
 # API routes above take precedence.

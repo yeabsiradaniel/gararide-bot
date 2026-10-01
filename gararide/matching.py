@@ -12,11 +12,13 @@ from __future__ import annotations
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from . import clock
 
 from .blocks import blocked_pairs
 from .config import CONFIG
 from .fares import fare
 from .places import origin_place, place_by_id
+from .trips import booking_open
 from .users import get_user
 
 
@@ -61,6 +63,13 @@ def _permitted(conn: sqlite3.Connection, rider, trip: sqlite3.Row,
         return False
     if trip["seats_left"] <= 0:
         return False
+    already = conn.execute(
+        "SELECT 1 FROM bookings WHERE trip_id = ? AND rider_id = ? AND status = 'booked'",
+        (trip["id"], rider["telegram_id"])).fetchone()
+    if already is not None:
+        return False  # already holding a seat on this trip — don't re-offer it
+    if not booking_open(datetime.fromisoformat(trip["depart_at"])):
+        return False  # past the booking cutoff — not offerable
     if rider["women_only"]:
         driver = get_user(conn, trip["driver_id"])
         if driver is None or not driver["is_female"]:
@@ -131,8 +140,11 @@ def near_misses(conn: sqlite3.Connection, *, rider_id: int, dest_place_id: int,
         conn, rider_id=rider_id, dest_place_id=dest_place_id,
         window_start=window_start, window_end=window_end)}
 
+    # Widen the window by the near-miss pad, but never below now — an already
+    # departed trip must not resurface as a "close match".
+    lo = max(window_start - pad, clock.now())
     out: list[NearMiss] = []
-    for trip in _candidate_rows(conn, window_start - pad, window_end + pad):
+    for trip in _candidate_rows(conn, lo, window_end + pad):
         if trip["id"] in exact_ids or not _permitted(conn, rider, trip, blocked):
             continue
         depart = datetime.fromisoformat(trip["depart_at"])

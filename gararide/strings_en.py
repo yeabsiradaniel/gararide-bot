@@ -8,12 +8,12 @@ WELCOME_DRIVER = (
 )
 WELCOME_RIDER = (
     "Hi! Welcome to Gara Ride 🙋\n\n"
-    "A neighbour is heading your way — share their empty seat.\n"
+    "A neighbour is heading your way. Share their empty seat.\n"
     "Share your phone number to get started."
 )
 SHARE_CONTACT = "📱 Share my number"
 NOT_ALLOWLISTED = (
-    "Sorry — this number isn't registered yet.\n"
+    "Sorry, this number isn't registered yet.\n"
     "Please sign up at the Ayat 49 registration desk."
 )
 REGISTERED = "You're registered 🎉"
@@ -45,7 +45,7 @@ ASK_SEATS = "How many free seats?"
 BTN_ANOTHER_TIME = "Another time"
 BTN_DONE = "✅ Done"
 TRIP_POSTED = "Posted 👍"
-ASK_ANOTHER_TIME_PROMPT = "Type the time — e.g. 14:30"
+ASK_ANOTHER_TIME_PROMPT = "Type the time, e.g. 14:30"
 DROPOFFS_PREFIX = "Drop-offs: "
 SEATS_WORD = "seats"
 NO_REQUESTS_YET = "No requests yet."
@@ -60,7 +60,7 @@ BTN_POST_MY_REQUEST = "✋ Post my request"
 BTN_NOTIFY_ME = "🔔 Tell me when it opens"
 BTN_TAKE_SEAT = "✅ Take a seat"
 WHEN_TOMORROW_MORNING = "Tomorrow morning"
-SEAT_TAKEN = "Sorry — that seat is taken."
+SEAT_TAKEN = "Sorry, that seat is taken."
 REQUEST_POSTED = "Your request is posted ✋"
 
 # --- trip card
@@ -69,8 +69,27 @@ BTN_NOT_THIS_DRIVER = "Not this person"
 BTN_CANT_MAKE_IT = "I can't make it"
 BTN_CANT_DRIVE = "I can't drive"
 BTN_PAID = "💵 Paid"
-PAY_IN_CAR = "{amount} — pay in the car"
-BAY_ALPHA = "Bay Alpha — main gate"
+PAY_IN_CAR = "{amount} · pay in the car"
+BAY_ALPHA = "Bay Alpha, main gate"
+
+# --- push notifications (sent by the bot when something happens)
+TRIP_MATCHED = "A driver is now going to {dest} ({when}). Grab a seat 🔔"
+ON_THE_WAY = "Your driver is on the way 🚗 about {mins} min to Bay Alpha."
+BOARDING_OPEN = "Your driver is at Bay Alpha 🚗 you have {mins} minutes to board."
+SEAT_BOOKED = "{name} took a seat to {dest} 🎟"
+BOOKING_CANCELLED = "{name} cancelled their seat to {dest}."
+TRIP_CANCELLED = "Your ride to {dest} ({when}) was cancelled."
+TRIP_UPDATED = "Your ride to {dest} was updated. Now leaving {when}."
+ADMIN_NEW_REPORT = "⚠️ New report\n{reporter} reported {reported} for {reason}.\nOpen the admin Ops screen to review."
+SUPPORT_MSG = "📨 Support message\nFrom {name} ({phone}):\n{msg}"
+REPORT_REASON_LABELS = {
+    "unsafe_driving": "Unsafe driving",
+    "no_show": "Didn't show up",
+    "rude": "Rude or inappropriate",
+    "wrong_car": "Car not as described",
+    "driver_no_show": "Driver didn't show up",
+    "other": "Other",
+}
 
 # --- women-only
 ASK_WOMEN_ONLY = "Women preference"

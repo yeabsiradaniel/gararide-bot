@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { S } from './strings'
+import { Icon } from './icons'
 
 export function Loader() {
   return <div className="center"><div className="spinner" /><div className="muted tiny">{S.loading}</div></div>
@@ -9,15 +10,15 @@ export function Loader() {
 export function ErrorView({ msg, onRetry }: { msg?: string; onRetry?: () => void }) {
   return (
     <div className="center">
-      <div style={{ fontSize: 30 }}>😕</div>
+      <span className="empty-ic"><Icon name="alert" size={34} /></span>
       <div className="muted">{msg || 'ስህተት ተፈጥሯል'}</div>
       {onRetry && <button className="btn btn--ghost" style={{ width: 'auto' }} onClick={onRetry}>{S.retry}</button>}
     </div>
   )
 }
 
-export function EmptyState({ icon = '🌱', text }: { icon?: string; text: string }) {
-  return <div className="center"><div style={{ fontSize: 30 }}>{icon}</div><div className="muted">{text}</div></div>
+export function EmptyState({ icon = 'leaf', text }: { icon?: string; text: string }) {
+  return <div className="center"><span className="empty-ic"><Icon name={icon} size={34} /></span><div className="muted">{text}</div></div>
 }
 
 export function Screen({ eyebrow, title, children }: { eyebrow?: string; title?: string; children: ReactNode }) {
@@ -32,6 +33,22 @@ export function Screen({ eyebrow, title, children }: { eyebrow?: string; title?:
       {children}
     </div>
   )
+}
+
+// Ticking mm:ss until `until` (epoch ms). Fires onDone once when it reaches zero.
+export function Countdown({ until, onDone }: { until: number; onDone?: () => void }) {
+  const [left, setLeft] = useState(() => Math.max(0, until - Date.now()))
+  useEffect(() => {
+    const id = setInterval(() => {
+      const rem = Math.max(0, until - Date.now())
+      setLeft(rem)
+      if (rem <= 0) { clearInterval(id); onDone?.() }
+    }, 1000)
+    return () => clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [until])
+  const secs = Math.ceil(left / 1000)
+  return <span className="price">{Math.floor(secs / 60)}:{String(secs % 60).padStart(2, '0')}</span>
 }
 
 interface AsyncState<T> { data?: T; loading: boolean; error?: string }

@@ -7,13 +7,14 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import datetime
+from . import clock
 
 
 def block(conn: sqlite3.Connection, blocker_id: int, blocked_id: int) -> None:
     conn.execute(
         "INSERT OR IGNORE INTO blocks (blocker_id, blocked_id, created_at)"
         " VALUES (?, ?, ?)",
-        (blocker_id, blocked_id, datetime.now().isoformat(timespec="seconds")),
+        (blocker_id, blocked_id, clock.now().isoformat(timespec="seconds")),
     )
     conn.commit()
 

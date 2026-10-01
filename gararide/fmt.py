@@ -7,6 +7,7 @@ A 12-hour misunderstanding strands someone in the dark; printing both is free.
 from __future__ import annotations
 
 from datetime import datetime
+from . import clock
 
 MORNING = "ጠዋት"
 AFTERNOON = "ከሰዓት"
@@ -25,7 +26,7 @@ def fmt_time(dt: datetime) -> str:
 
 
 def fmt_day(dt: datetime) -> str:
-    today = datetime.now().date()
+    today = clock.now().date()
     delta = (dt.date() - today).days
     if delta == 0:
         return "ዛሬ"

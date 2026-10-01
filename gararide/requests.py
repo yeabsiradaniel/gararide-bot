@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import datetime
+from . import clock
 
 from .blocks import blocked_pairs
 from .places import origin_place
@@ -25,7 +26,7 @@ def post_request(conn: sqlite3.Connection, *, rider_id: int, dest_place_id: int,
         (rider_id, origin["id"], dest_place_id,
          window_start.isoformat(timespec="seconds"),
          window_end.isoformat(timespec="seconds"),
-         datetime.now().isoformat(timespec="seconds")),
+         clock.now().isoformat(timespec="seconds")),
     )
     conn.commit()
     return cur.lastrowid
@@ -66,6 +67,18 @@ def fill_request(conn: sqlite3.Connection, request_id: int) -> None:
     conn.commit()
 
 
+def fill_own_request(conn: sqlite3.Connection, *, rider_id: int, dest_place_id: int,
+                     at: str) -> None:
+    """When a rider books a seat, close their own matching open request so it stops
+    inflating the demand count and double-signalling to drivers."""
+    conn.execute(
+        "UPDATE requests SET status = 'filled'"
+        " WHERE rider_id = ? AND dest_place_id = ? AND status = 'open'"
+        "   AND ? BETWEEN window_start AND window_end",
+        (rider_id, dest_place_id, at))
+    conn.commit()
+
+
 def cancel_request(conn: sqlite3.Connection, request_id: int) -> None:
     conn.execute("UPDATE requests SET status = 'cancelled' WHERE id = ?",
                  (request_id,))
@@ -73,7 +86,7 @@ def cancel_request(conn: sqlite3.Connection, request_id: int) -> None:
 
 
 def expire_stale(conn: sqlite3.Connection, now: datetime | None = None) -> int:
-    cutoff = (now or datetime.now()).isoformat(timespec="seconds")
+    cutoff = (now or clock.now()).isoformat(timespec="seconds")
     cur = conn.execute(
         "UPDATE requests SET status = 'expired'"
         " WHERE status = 'open' AND window_end < ?", (cutoff,))

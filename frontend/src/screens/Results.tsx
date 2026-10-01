@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { api, ApiError } from '../api'
+import { api } from '../api'
 import { useNav } from '../nav'
 import type { Screen as Scr } from '../nav'
 import { S } from '../strings'
 import { ErrorView, Loader, Screen, useAsync } from '../ui'
-import { fmtMoney, fmtPerson, fmtWhen } from '../fmt'
+import { Icon } from '../icons'
+import { fmtMoney, fmtWhen } from '../fmt'
 import { windowFor } from '../util'
 import { haptic, notify } from '../telegram'
 
@@ -18,18 +19,6 @@ export default function Results({ screen }: { screen: Extract<Scr, { name: 'resu
   if (res.error) return <ErrorView msg={res.error} onRetry={res.reload} />
   const data = res.data!
 
-  async function book(tripId: number, toPlaceId: number) {
-    if (busy) return
-    setBusy(true); haptic()
-    try {
-      const card = await api.book(tripId, toPlaceId)
-      notify('success')
-      nav.go({ name: 'tripCard', card })
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 409) alert(S.seatTaken)
-    } finally { setBusy(false) }
-  }
-
   async function postRequest() {
     setBusy(true); haptic()
     const [ws, we] = windowFor(when)
@@ -40,17 +29,27 @@ export default function Results({ screen }: { screen: Extract<Scr, { name: 'resu
   if (data.matches.length) {
     return (
       <Screen eyebrow={S.neighboursGoing} title={destName}>
-        <div className="stack">
+        <div className="stack reveal">
           {data.matches.map((m) => (
-            <button key={m.trip_id} className="card" disabled={busy}
-                    style={{ textAlign: 'start', cursor: 'pointer' }}
-                    onClick={() => book(m.trip_id, destId)}>
-              <div className="spread">
-                <div>
-                  <div style={{ fontWeight: 700 }}>{fmtPerson(m.driver_name, m.driver_tower)}</div>
-                  <div className="clock2">{fmtWhen(m.depart_at)} · {m.seats_left} {S.seatsWord}</div>
+            <button key={m.trip_id} className="card card--lift"
+                    style={{ textAlign: 'start', cursor: 'pointer', width: '100%' }}
+                    onClick={() => { haptic(); nav.go({ name: 'ridePreview', trip_id: m.trip_id, to_place_id: destId, dest_name_am: destName, driver_name: m.driver_name, driver_tower: m.driver_tower, car_model: m.car_model, car_color: m.car_color, plate: m.plate, depart_at: m.depart_at, fare: m.fare, seats_left: m.seats_left }) }}>
+              <div className="row" style={{ gap: 13 }}>
+                <span className="avatar avatar--ring"><span>{(m.driver_name || '?').trim().charAt(0)}</span></span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="row" style={{ gap: 7 }}>
+                    <span style={{ fontWeight: 700 }}>{m.driver_name}</span>
+                    <span className="badge badge--verified"><Icon name="check" size={11} /> {S.verified}</span>
+                  </div>
+                  <div className="clock2" style={{ marginTop: 3 }}>
+                    {fmtWhen(m.depart_at)}{m.driver_tower ? ` · Tower ${m.driver_tower}` : ''}
+                  </div>
+                  <div className="tiny" style={{ marginTop: 2, color: 'var(--green)' }}>{m.seats_left} {S.seatsWord}</div>
                 </div>
-                <span className="price">{fmtMoney(m.fare)}</span>
+                <div style={{ textAlign: 'end', flexShrink: 0 }}>
+                  <div className="price" style={{ fontSize: 19 }}>{fmtMoney(m.fare)}</div>
+                  <span className="tiny muted">{S.takeSeat}</span>
+                </div>
               </div>
             </button>
           ))}
@@ -68,15 +67,21 @@ export default function Results({ screen }: { screen: Extract<Scr, { name: 'resu
           <div className="eyebrow">{S.closeToWhat}</div>
           <div className="stack">
             {data.near_misses.map((m) => (
-              <button key={m.trip_id} className="card" disabled={busy}
-                      style={{ textAlign: 'start', cursor: 'pointer' }}
-                      onClick={() => book(m.trip_id, m.dest_place_id)}>
-                <div className="spread">
-                  <div>
-                    <div style={{ fontWeight: 700 }}>{m.driver_name} · → {m.dest_name_am}</div>
-                    <div className="clock2">{fmtWhen(m.depart_at)} · {S.partway}</div>
+              <button key={m.trip_id} className="card"
+                      style={{ textAlign: 'start', cursor: 'pointer', width: '100%' }}
+                      onClick={() => { haptic(); nav.go({ name: 'ridePreview', trip_id: m.trip_id, to_place_id: m.dest_place_id, dest_name_am: m.dest_name_am, driver_name: m.driver_name, driver_tower: m.driver_tower, car_model: m.car_model, car_color: m.car_color, plate: m.plate, depart_at: m.depart_at, fare: m.fare }) }}>
+                <div className="row" style={{ gap: 13 }}>
+                  <span className="avatar avatar--ring"><span>{(m.driver_name || '?').trim().charAt(0)}</span></span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700 }}>{m.driver_name}</div>
+                    <div className="clock2 row" style={{ gap: 6, marginTop: 3 }}>
+                      <Icon name="pin" size={14} style={{ color: 'var(--green)' }} /> {m.dest_name_am} · {fmtWhen(m.depart_at)}
+                    </div>
                   </div>
-                  <span className="price">{fmtMoney(m.fare)}</span>
+                  <div style={{ textAlign: 'end', flexShrink: 0 }}>
+                    <div className="price" style={{ fontSize: 18 }}>{fmtMoney(m.fare)}</div>
+                    <span className="tiny muted">{S.partway}</span>
+                  </div>
                 </div>
               </button>
             ))}
@@ -84,12 +89,12 @@ export default function Results({ screen }: { screen: Extract<Scr, { name: 'resu
         </>
       )}
       {data.demand_count > 0 && (
-        <div className="card" style={{ background: 'var(--surface)', border: 'none' }}>
-          🌱 {S.demandLine(data.demand_count)}
+        <div className="card row" style={{ background: 'var(--surface)', border: 'none', gap: 10, color: 'var(--green)' }}>
+          <Icon name="users" size={20} /> <span style={{ color: 'var(--ink)' }}>{S.demandLine(data.demand_count)}</span>
         </div>
       )}
       <div className="sticky-actions stack">
-        <button className="btn btn--sunset" disabled={busy} onClick={postRequest}>✋ {S.postMyRequest}</button>
+        <button className="btn btn--sunset" disabled={busy} onClick={postRequest}><Icon name="megaphone" size={18} /> {S.postMyRequest}</button>
       </div>
     </Screen>
   )

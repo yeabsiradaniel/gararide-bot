@@ -7,7 +7,7 @@ export default function RequestsNear() {
   const reqs = useAsync(() => api.requestsNear(), [])
   if (reqs.loading) return <Loader />
   if (reqs.error) return <ErrorView msg={reqs.error} onRetry={reqs.reload} />
-  if (!reqs.data?.length) return <Screen eyebrow={S.requestsNear}><EmptyState icon="📋" text={S.noRequestsYet} /></Screen>
+  if (!reqs.data?.length) return <Screen eyebrow={S.requestsNear}><EmptyState icon="clipboard" text={S.noRequestsYet} /></Screen>
 
   return (
     <Screen eyebrow={S.appName} title={S.requestsNear}>

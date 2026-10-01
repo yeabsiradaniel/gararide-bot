@@ -69,6 +69,17 @@ export function callPhone(phone: string): void {
   else window.location.href = url
 }
 
+// Opens Telegram's "send to…" picker so the rider can forward ride details to
+// family. Outside Telegram (dev) falls back to the Web Share sheet, then clipboard.
+export function shareText(text: string): void {
+  if (tg) {
+    tg.openTelegramLink(`https://t.me/share/url?url=&text=${encodeURIComponent(text)}`)
+    return
+  }
+  if (navigator.share) { navigator.share({ text }).catch(() => { /* cancelled */ }); return }
+  try { navigator.clipboard.writeText(text) } catch { /* noop */ }
+}
+
 export const backButton = {
   show(cb: () => void) {
     if (!tg) return

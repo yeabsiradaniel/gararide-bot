@@ -2,8 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from gararide.bookings import book
-from gararide.places import place_by_slug
+from gararide.places import origin_place, place_by_slug
 from gararide.scheduler import due_confirmations, due_reminders
 from gararide.trips import post_trip
 
@@ -14,11 +13,18 @@ def booked(people):
     kaz = place_by_slug(conn, "kazanchis")["id"]
 
     def make(depart):
+        # Insert the booking directly: these tests exercise the scheduler's
+        # due-detection, not the booking cutoff (which is wall-clock sensitive).
         trip_id = post_trip(conn, driver_id=driver["telegram_id"],
                             dest_place_id=kaz, dropoff_place_ids=[kaz],
                             depart_at=depart, seats=3)
-        return book(conn, trip_id=trip_id, rider_id=rider["telegram_id"],
-                    to_place_id=kaz)["id"]
+        cur = conn.execute(
+            "INSERT INTO bookings (trip_id, rider_id, from_place_id, to_place_id,"
+            " fare, created_at) VALUES (?,?,?,?,?,?)",
+            (trip_id, rider["telegram_id"], origin_place(conn)["id"], kaz, 25,
+             datetime.now().isoformat(timespec="seconds")))
+        conn.commit()
+        return cur.lastrowid
 
     return conn, make
 
@@ -40,7 +46,7 @@ def test_a_booking_two_hours_out_is_not_yet_due(booked):
 def test_a_departed_trip_is_not_due(booked):
     conn, make = booked
     now = datetime.now()
-    bid = make(now - timedelta(minutes=10))
+    bid = make(now - timedelta(minutes=10))  # booked earlier, trip has since departed
     assert bid not in due_reminders(conn, now)
 
 

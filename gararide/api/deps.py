@@ -3,12 +3,25 @@ from __future__ import annotations
 
 from fastapi import Depends, Header, HTTPException, Request
 
+from ..db import connect
 from ..users import get_user
 from .auth import InvalidInitData, parse_init_data
 
 
 def get_conn(request: Request):
-    return request.app.state.conn
+    """A fresh connection per request in production — SQLite connections are not
+    safe to share across threadpool workers (or with the bot's background jobs).
+    When no db_path is set (tests, single-threaded, in-memory DB) fall back to the
+    shared connection."""
+    path = getattr(request.app.state, "db_path", None)
+    if not path:
+        yield request.app.state.conn
+        return
+    conn = connect(path)
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 def current_user(request: Request,

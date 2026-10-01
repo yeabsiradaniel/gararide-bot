@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import datetime
+from . import clock
 
 from .config import CONFIG
 
@@ -45,7 +46,7 @@ def save_trip(conn: sqlite3.Connection, *, user_id: int, dest_place_id: int,
         "INSERT INTO saved_trips (user_id, dest_place_id, depart_time, days_mask,"
         " created_at) VALUES (?, ?, ?, ?, ?)",
         (user_id, dest_place_id, depart_time, days_mask,
-         datetime.now().isoformat(timespec="seconds")),
+         clock.now().isoformat(timespec="seconds")),
     )
     conn.commit()
     return cur.lastrowid

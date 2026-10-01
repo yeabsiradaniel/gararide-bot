@@ -4,6 +4,7 @@ import type { DropoffOptions, PostedTrip } from '../api'
 import { useNav } from '../nav'
 import { S } from '../strings'
 import { Loader, Screen, useAsync } from '../ui'
+import { Icon } from '../icons'
 import { fmtMoney, fmtWhen } from '../fmt'
 import { haptic, notify } from '../telegram'
 
@@ -79,7 +80,7 @@ export default function PostTrip() {
         <div className="stack">
           {destinations.map((p) => (
             <button key={p.id} className="tile" onClick={() => pickDest(p.id)}>
-              <span className="tile__icon">📍</span>
+              <span className="tile__icon"><Icon name="pin" size={22} /></span>
               <span className="tile__body"><div className="tile__title">{p.name_am}</div></span>
             </button>
           ))}
@@ -97,18 +98,18 @@ export default function PostTrip() {
             const on = selected.has(p.id)
             return (
               <button key={p.id} className={`check ${on ? 'check--on' : ''}`} onClick={() => toggle(p.id)}>
-                <span className="check__box">{on ? '☑' : '☐'}</span>
+                <span className="check__box"><Icon name={on ? 'checkSquare' : 'square'} size={22} /></span>
                 <span>{p.name_am}</span>
               </button>
             )
           })}
           <div className="check check--fixed">
-            <span className="check__box">📍</span>
+            <span className="check__box"><Icon name="pin" size={22} /></span>
             <span>{S.destinationLabel}: <b>{opts.destination.name_am}</b></span>
           </div>
         </div>
         <div className="sticky-actions">
-          <button className="btn" onClick={() => { haptic(); setStep('when') }}>→</button>
+          <button className="btn" onClick={() => { haptic(); setStep('when') }}>{S.continue_} <Icon name="chevronRight" size={20} /></button>
         </div>
       </Screen>
     )
@@ -120,7 +121,7 @@ export default function PostTrip() {
         <div className="stack">
           {SLOTS.map((slot) => (
             <button key={slot} className="tile" onClick={() => pickSlot(slot)}>
-              <span className="tile__icon">🕖</span>
+              <span className="tile__icon"><Icon name="clock" size={22} /></span>
               <span className="tile__body"><div className="tile__title">{slot}</div></span>
             </button>
           ))}
@@ -129,7 +130,7 @@ export default function PostTrip() {
             <input className="field" type="datetime-local"
                    onChange={(e) => e.target.value && setDepartAt(e.target.value + ':00')} />
             <button className="btn btn--ghost" disabled={!departAt}
-                    onClick={() => setStep('seats')}>→</button>
+                    onClick={() => setStep('seats')}>{S.continue_} <Icon name="chevronRight" size={20} /></button>
           </label>
         </div>
       </Screen>

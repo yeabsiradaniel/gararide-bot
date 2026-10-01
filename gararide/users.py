@@ -10,6 +10,7 @@ import csv
 import re
 import sqlite3
 from datetime import datetime
+from . import clock
 
 
 class NotAllowlisted(Exception):
@@ -33,20 +34,20 @@ def normalise_phone(raw: str) -> str:
 def import_allowlist(conn: sqlite3.Connection, csv_path: str) -> int:
     with open(csv_path, encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
-    now = datetime.now().isoformat(timespec="seconds")
+    now = clock.now().isoformat(timespec="seconds")
     for row in rows:
         conn.execute(
             "INSERT INTO allowlist"
-            " (phone, full_name, tower, role, car_model, plate, is_female,"
+            " (phone, full_name, tower, role, car_model, car_color, plate, is_female,"
             "  car_seats, verified_at)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             " ON CONFLICT(phone) DO UPDATE SET"
             "   full_name=excluded.full_name, tower=excluded.tower,"
             "   role=excluded.role, car_model=excluded.car_model,"
-            "   plate=excluded.plate, is_female=excluded.is_female,"
-            "   car_seats=excluded.car_seats",
+            "   car_color=excluded.car_color, plate=excluded.plate,"
+            "   is_female=excluded.is_female, car_seats=excluded.car_seats",
             (normalise_phone(row["phone"]), row["full_name"], row["tower"],
-             row["role"], row.get("car_model") or None,
+             row["role"], row.get("car_model") or None, row.get("car_color") or None,
              row.get("plate") or None, int(row.get("is_female") or 0),
              int(row["car_seats"]) if row.get("car_seats") else None, now),
         )
@@ -56,24 +57,25 @@ def import_allowlist(conn: sqlite3.Connection, csv_path: str) -> int:
 
 def add_to_allowlist(conn: sqlite3.Connection, *, phone: str, full_name: str,
                      tower: str, role: str = "driver", car_model: str | None = None,
-                     plate: str | None = None, is_female: bool = False,
+                     car_color: str | None = None, plate: str | None = None,
+                     is_female: bool = False,
                      car_seats: int | None = None) -> sqlite3.Row:
     """Desk-verify one person into the allowlist (the in-app equivalent of a CSV
     import row). Upserts on phone so re-adding corrects a typo instead of failing.
     The person still self-onboards through the bot afterwards."""
-    now = datetime.now().isoformat(timespec="seconds")
+    now = clock.now().isoformat(timespec="seconds")
     conn.execute(
         "INSERT INTO allowlist"
-        " (phone, full_name, tower, role, car_model, plate, is_female,"
+        " (phone, full_name, tower, role, car_model, car_color, plate, is_female,"
         "  car_seats, verified_at)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         " ON CONFLICT(phone) DO UPDATE SET"
         "   full_name=excluded.full_name, tower=excluded.tower,"
         "   role=excluded.role, car_model=excluded.car_model,"
-        "   plate=excluded.plate, is_female=excluded.is_female,"
-        "   car_seats=excluded.car_seats",
+        "   car_color=excluded.car_color, plate=excluded.plate,"
+        "   is_female=excluded.is_female, car_seats=excluded.car_seats",
         (normalise_phone(phone), full_name, tower, role, car_model or None,
-         plate or None, int(is_female), car_seats, now),
+         car_color or None, plate or None, int(is_female), car_seats, now),
     )
     conn.commit()
     return lookup_allowlist(conn, phone)
@@ -106,11 +108,36 @@ def remove_driver(conn: sqlite3.Connection, phone: str) -> dict:
     return {"was_onboarded": claimed_by is not None, "trips_cancelled": trips_cancelled}
 
 
+def update_driver(conn: sqlite3.Connection, phone: str, *, full_name: str, tower: str,
+                  car_model: str | None, car_color: str | None, plate: str | None,
+                  car_seats: int | None, is_female: bool) -> sqlite3.Row:
+    """Admin edit of a desk-verified driver. Updates the allowlist row and, if the
+    driver has already onboarded, their live user record too so the change shows
+    for riders immediately. Phone (the identity) is not editable here."""
+    p = normalise_phone(phone)
+    row = lookup_allowlist(conn, p)
+    if row is None:
+        raise NotOnRoster(phone)
+    fields = (full_name, tower, car_model or None, car_color or None, plate or None,
+              int(is_female), car_seats)
+    conn.execute(
+        "UPDATE allowlist SET full_name=?, tower=?, car_model=?, car_color=?,"
+        "  plate=?, is_female=?, car_seats=? WHERE phone=?", (*fields, p))
+    if row["claimed_by"] is not None:
+        conn.execute(
+            "UPDATE users SET full_name=?, tower=?, car_model=?, car_color=?,"
+            "  plate=?, is_female=?, car_seats=? WHERE telegram_id=?",
+            (*fields, row["claimed_by"]))
+    conn.commit()
+    return lookup_allowlist(conn, p)
+
+
 def roster(conn: sqlite3.Connection) -> list[sqlite3.Row]:
     """Everyone desk-verified, newest first, with whether they've onboarded yet."""
     return conn.execute(
-        "SELECT phone, full_name, tower, role, car_model, plate, is_female,"
-        "       car_seats, verified_at, claimed_by IS NOT NULL AS onboarded"
+        "SELECT phone, full_name, tower, role, car_model, car_color, plate, is_female,"
+        "       car_seats, verified_at, claimed_by,"
+        "       claimed_by IS NOT NULL AS onboarded"
         " FROM allowlist ORDER BY verified_at DESC"
     ).fetchall()
 
@@ -143,12 +170,12 @@ def register(conn: sqlite3.Connection, telegram_id: int, phone: str,
 
     conn.execute(
         "INSERT INTO users"
-        " (telegram_id, phone, full_name, tower, role, car_model, plate,"
+        " (telegram_id, phone, full_name, tower, role, car_model, car_color, plate,"
         "  is_female, car_seats, created_at, lang)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (telegram_id, normalise_phone(phone), entry["full_name"], entry["tower"],
-         entry["role"], entry["car_model"], entry["plate"], is_female,
-         entry["car_seats"], datetime.now().isoformat(timespec="seconds"), lang),
+         entry["role"], entry["car_model"], entry["car_color"], entry["plate"],
+         is_female, entry["car_seats"], clock.now().isoformat(timespec="seconds"), lang),
     )
     conn.execute("UPDATE allowlist SET claimed_by = ? WHERE phone = ?",
                  (telegram_id, normalise_phone(phone)))
@@ -173,10 +200,17 @@ def register_rider(conn: sqlite3.Connection, telegram_id: int, phone: str,
         " (telegram_id, phone, full_name, tower, role, created_at, lang)"
         " VALUES (?, ?, ?, '', 'rider', ?, ?)",
         (telegram_id, normalise_phone(phone), full_name,
-         datetime.now().isoformat(timespec="seconds"), lang),
+         clock.now().isoformat(timespec="seconds"), lang),
     )
     conn.commit()
     return get_user(conn, telegram_id)
+
+
+def set_consent(conn: sqlite3.Connection, telegram_id: int) -> None:
+    """Record a one-time acknowledgement of the rules + data use."""
+    conn.execute("UPDATE users SET consented_at = ? WHERE telegram_id = ?",
+                 (clock.now().isoformat(timespec="seconds"), telegram_id))
+    conn.commit()
 
 
 def set_lang(conn: sqlite3.Connection, telegram_id: int, lang: str) -> None:
@@ -200,10 +234,10 @@ def reconcile_role(conn: sqlite3.Connection, telegram_id: int) -> sqlite3.Row | 
     if entry["claimed_by"] not in (None, telegram_id):
         return user  # this driver slot belongs to another account
     conn.execute(
-        "UPDATE users SET role='driver', tower=?, car_model=?, plate=?,"
+        "UPDATE users SET role='driver', tower=?, car_model=?, car_color=?, plate=?,"
         "  is_female=?, car_seats=? WHERE telegram_id=?",
-        (entry["tower"], entry["car_model"], entry["plate"], entry["is_female"],
-         entry["car_seats"], telegram_id),
+        (entry["tower"], entry["car_model"], entry["car_color"], entry["plate"],
+         entry["is_female"], entry["car_seats"], telegram_id),
     )
     conn.execute("UPDATE allowlist SET claimed_by=? WHERE phone=?",
                  (telegram_id, user["phone"]))

@@ -47,15 +47,3 @@ def trip_card(conn: sqlite3.Connection, booking_id: int, for_role: str) -> str:
         f"💵 {fmt_money(booking['fare'])}",
         f"📞 {rider['phone']}",
     ])
-
-
-async def send_trip_card(bot, conn: sqlite3.Connection, booking_id: int) -> None:
-    booking = conn.execute("SELECT * FROM bookings WHERE id = ?",
-                           (booking_id,)).fetchone()
-    trip = get_trip(conn, booking["trip_id"])
-    for chat_id, role in ((booking["rider_id"], "rider"),
-                          (trip["driver_id"], "driver")):
-        try:
-            await bot.send_message(chat_id, trip_card(conn, booking_id, role))
-        except Exception as exc:  # blocked the bot, deactivated, etc.
-            log.warning("trip card to %s failed: %s", chat_id, exc)

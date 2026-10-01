@@ -56,6 +56,19 @@ def test_search_with_no_exact_match_is_never_empty(client):
     assert "demand_count" in body
 
 
+def test_a_trip_you_already_booked_is_not_offered_again(client):
+    conn, c = client
+    tid, ids = _post_kaz_via_meg(conn)
+    before = c.get("/trips/search", params={"dest_place_id": ids["megenagna"]},
+                   headers=_auth(2001)).json()
+    assert len(before["matches"]) == 1
+    c.post("/bookings", headers=_auth(2001),
+           json={"trip_id": tid, "to_place_id": ids["megenagna"]})
+    after = c.get("/trips/search", params={"dest_place_id": ids["megenagna"]},
+                  headers=_auth(2001)).json()
+    assert after["matches"] == []
+
+
 def test_booking_returns_driver_contact_and_price(client):
     conn, c = client
     _, ids = _post_kaz_via_meg(conn)

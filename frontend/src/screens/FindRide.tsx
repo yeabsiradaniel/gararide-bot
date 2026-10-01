@@ -4,6 +4,7 @@ import type { Place } from '../api'
 import { useNav } from '../nav'
 import { S } from '../strings'
 import { Loader, Screen, useAsync } from '../ui'
+import { Icon } from '../icons'
 import { WHENS, windowFor } from '../util'
 import { haptic, notify } from '../telegram'
 
@@ -30,7 +31,7 @@ export default function FindRide({ mode }: { mode: 'search' | 'request' }) {
         <div className="stack">
           {destinations.map((p) => (
             <button key={p.id} className="tile" onClick={() => { haptic(); setDest(p) }}>
-              <span className="tile__icon">📍</span>
+              <span className="tile__icon"><Icon name="pin" size={22} /></span>
               <span className="tile__body"><div className="tile__title">{p.name_am}</div></span>
             </button>
           ))}
@@ -59,7 +60,7 @@ export default function FindRide({ mode }: { mode: 'search' | 'request' }) {
       <div className="stack">
         {WHENS.map((w) => (
           <button key={w.key} className="tile" disabled={busy} onClick={() => pickWhen(w.key)}>
-            <span className="tile__icon">{w.icon}</span>
+            <span className="tile__icon"><Icon name={w.icon} size={22} /></span>
             <span className="tile__body"><div className="tile__title">{whenLabel[w.key]}</div></span>
           </button>
         ))}

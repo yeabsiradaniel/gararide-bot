@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import datetime, timedelta
+from . import clock
 
 from .trips import post_trip
 
@@ -26,7 +27,7 @@ def save_route(conn: sqlite3.Connection, *, driver_id: int, dest_place_id: int,
         " (driver_id, dest_place_id, dropoffs, depart_time, seats, days_mask, created_at)"
         " VALUES (?, ?, ?, ?, ?, ?, ?)",
         (driver_id, dest_place_id, dropoffs, depart_time, seats, days_mask,
-         datetime.now().isoformat(timespec="seconds")),
+         clock.now().isoformat(timespec="seconds")),
     )
     conn.commit()
     return cur.lastrowid
@@ -52,7 +53,7 @@ def deactivate_route(conn: sqlite3.Connection, route_id: int) -> None:
 
 def tomorrow_departure(depart_time: str) -> datetime:
     hh, mm = (int(x) for x in depart_time.split(":"))
-    return (datetime.now() + timedelta(days=1)).replace(
+    return (clock.now() + timedelta(days=1)).replace(
         hour=hh, minute=mm, second=0, microsecond=0)
 
 

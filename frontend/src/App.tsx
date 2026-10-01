@@ -7,14 +7,16 @@ import type { Nav, Screen } from './nav'
 import { ErrorView, Loader, Screen as ScreenWrap } from './ui'
 import { S, setActiveLang } from './strings'
 import type { Lang } from './strings'
+import { Icon } from './icons'
 
 const LANG_KEY = 'gararide_lang'
+const INTRO_KEY = 'gararide_intro_seen'
 
 function LangFab({ lang, onToggle }: { lang: Lang; onToggle: () => void }) {
   // Shows the language you'd switch TO.
   return (
     <button className="lang-fab" onClick={onToggle} aria-label="Change language">
-      🌐 {lang === 'am' ? 'EN' : 'አማ'}
+      <Icon name="globe" size={15} /> {lang === 'am' ? 'EN' : 'አማ'}
     </button>
   )
 }
@@ -31,6 +33,15 @@ import WomenOnly from './screens/WomenOnly'
 import Saved from './screens/Saved'
 import Admin from './screens/Admin'
 import AddDriver from './screens/AddDriver'
+import Receipt from './screens/Receipt'
+import RidePreview from './screens/RidePreview'
+import Report from './screens/Report'
+import EditTrip from './screens/EditTrip'
+import Profile from './screens/Profile'
+import Support from './screens/Support'
+import Broadcast from './screens/Broadcast'
+import Consent from './screens/Consent'
+import Walkthrough from './screens/Walkthrough'
 
 function Placeholder({ title }: { title: string }) {
   return <ScreenWrap title={title}><div className="muted">በቅርቡ…</div></ScreenWrap>
@@ -49,6 +60,9 @@ export default function App() {
   const [phase, setPhase] = useState<'loading' | 'ready' | 'register' | 'error'>('loading')
   const [err, setErr] = useState<string>()
   const [stack, setStack] = useState<Screen[]>([])
+  const [introSeen, setIntroSeen] = useState(() => {
+    try { return localStorage.getItem(INTRO_KEY) === '1' } catch { return false }
+  })
   const [lang, setLangState] = useState<Lang>(() => {
     const saved = (localStorage.getItem(LANG_KEY) as Lang) || 'am'
     setActiveLang(saved)  // apply before first paint
@@ -94,7 +108,9 @@ export default function App() {
     go: (s) => setStack((st) => [...st, s]),
     back,
     reset: (s) => setStack([s]),
-  }), [me, back])
+    lang,
+    toggleLang,
+  }), [me, back, lang, toggleLang])
 
   // Telegram hardware back button follows the stack depth.
   const canBack = stack.length > 1
@@ -107,6 +123,27 @@ export default function App() {
   if (phase === 'loading') return <div className="app">{fab}<Loader /></div>
   if (phase === 'error') return <div className="app">{fab}<ErrorView msg={err} onRetry={boot} /></div>
   if (phase === 'register') return <div className="app">{fab}<Register /></div>
+
+  // One-time consent gate before anything else.
+  if (me && !me.consented) {
+    return (
+      <div className="app">{fab}
+        <Consent onAgree={async () => { await api.consent(); setMe({ ...me, consented: true }) }} />
+      </div>
+    )
+  }
+
+  // First-open "how it works", once per device (after consent).
+  if (me && !introSeen) {
+    return (
+      <div className="app">{fab}
+        <Walkthrough role={me.role} onDone={() => {
+          try { localStorage.setItem(INTRO_KEY, '1') } catch { /* private mode */ }
+          setIntroSeen(true)
+        }} />
+      </div>
+    )
+  }
 
   const current = stack[stack.length - 1]
   const render = (s: Screen) => {
@@ -123,7 +160,14 @@ export default function App() {
       case 'womenOnly': return <WomenOnly />
       case 'saved': return <Saved />
       case 'admin': return <Admin />
-      case 'addDriver': return <AddDriver />
+      case 'addDriver': return <AddDriver edit={s.edit} />
+      case 'receipt': return <Receipt ride={s.ride} />
+      case 'ridePreview': return <RidePreview p={s} />
+      case 'report': return <Report trip_id={s.trip_id} driverName={s.driver_name} />
+      case 'editTrip': return <EditTrip trip={s.trip} />
+      case 'profile': return <Profile />
+      case 'support': return <Support />
+      case 'broadcast': return <Broadcast />
       default: return <Placeholder title={s.name} />
     }
   }

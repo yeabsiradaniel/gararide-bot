@@ -3,6 +3,7 @@ import { api } from '../api'
 import { useNav } from '../nav'
 import { S } from '../strings'
 import { Screen } from '../ui'
+import { Icon } from '../icons'
 import { haptic, notify } from '../telegram'
 
 export default function WomenOnly() {
@@ -13,7 +14,7 @@ export default function WomenOnly() {
 
   const Toggle = ({ on, set, label }: { on: boolean; set: (v: boolean) => void; label: string }) => (
     <button className={`check ${on ? 'check--on' : ''}`} onClick={() => { haptic(); set(!on) }}>
-      <span className="check__box">{on ? '☑' : '☐'}</span>
+      <span className="check__box"><Icon name={on ? 'checkSquare' : 'square'} size={22} /></span>
       <span>{label}</span>
     </button>
   )
@@ -25,7 +26,7 @@ export default function WomenOnly() {
   }
 
   return (
-    <Screen eyebrow="💜" title={S.womenOnly}>
+    <Screen eyebrow={S.appName} title={S.womenOnly}>
       <div className="stack">
         <Toggle on={wo} set={setWo} label={S.womenDriversOnly} />
         <Toggle on={wp} set={setWp} label={S.womenPresent} />

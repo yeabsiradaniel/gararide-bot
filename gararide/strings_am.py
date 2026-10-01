@@ -13,7 +13,7 @@ WELCOME_RIDER = (
 )
 SHARE_CONTACT = "📱 ስልኬን አጋራ"
 NOT_ALLOWLISTED = (
-    "ይቅርታ — ይህ ቁጥር ገና አልተመዘገበም።\n"
+    "ይቅርታ፣ ይህ ቁጥር ገና አልተመዘገበም።\n"
     "እባክዎ በአያት 49 የምዝገባ ጠረጴዛ ላይ ይመዝገቡ።"
 )
 REGISTERED = "ተመዝግበዋል 🎉"
@@ -45,7 +45,7 @@ ASK_SEATS = "ስንት ባዶ ወንበር አለ?"
 BTN_ANOTHER_TIME = "ሌላ ሰዓት"
 BTN_DONE = "✅ ጨርሻለሁ"
 TRIP_POSTED = "ተለጥፏል 👍"
-ASK_ANOTHER_TIME_PROMPT = "ሰዓቱን ይጻፉ — ለምሳሌ 14:30"
+ASK_ANOTHER_TIME_PROMPT = "ሰዓቱን ይጻፉ፣ ለምሳሌ 14:30"
 DROPOFFS_PREFIX = "የሚያወርዱባቸው፡ "
 SEATS_WORD = "ወንበር"
 NO_REQUESTS_YET = "ገና ጥያቄ የለም።"
@@ -60,7 +60,7 @@ BTN_POST_MY_REQUEST = "✋ ጥያቄዬን ልለጥፍ"
 BTN_NOTIFY_ME = "🔔 ሲከፈት ንገረኝ"
 BTN_TAKE_SEAT = "✅ ቦታ ልያዝ"
 WHEN_TOMORROW_MORNING = "ነገ ጠዋት"
-SEAT_TAKEN = "ይቅርታ — ቦታው ተይዟል።"
+SEAT_TAKEN = "ይቅርታ፣ ቦታው ተይዟል።"
 REQUEST_POSTED = "ጥያቄዎ ተለጥፏል ✋"
 
 # --- trip card
@@ -69,8 +69,27 @@ BTN_NOT_THIS_DRIVER = "ይህን ሰው አልፈልግም"
 BTN_CANT_MAKE_IT = "መምጣት አልችልም"
 BTN_CANT_DRIVE = "መንዳት አልችልም"
 BTN_PAID = "💵 ተከፍሏል"
-PAY_IN_CAR = "{amount} — በመኪና ውስጥ ይክፈሉ"
-BAY_ALPHA = "Bay Alpha — ዋና በር"
+PAY_IN_CAR = "{amount} · በመኪና ውስጥ ይክፈሉ"
+BAY_ALPHA = "Bay Alpha, ዋና በር"
+
+# --- push notifications (sent by the bot when something happens)
+TRIP_MATCHED = "ወደ {dest} ({when}) የሚሄድ ሹፌር ተገኘ 🔔 ቦታ ይያዙ።"
+ON_THE_WAY = "ሹፌርዎ እየመጣ ነው 🚗 ወደ Bay Alpha ለመድረስ በግምት {mins} ደቂቃ።"
+BOARDING_OPEN = "ሹፌርዎ Bay Alpha ደርሷል 🚗 ለመሳፈር {mins} ደቂቃ አለዎት።"
+SEAT_BOOKED = "{name} ወደ {dest} ቦታ ያዙ 🎟"
+BOOKING_CANCELLED = "{name} ወደ {dest} የያዙትን ቦታ ሰረዙ።"
+TRIP_CANCELLED = "ወደ {dest} ({when}) የያዙት ጉዞ ተሰርዟል።"
+TRIP_UPDATED = "ወደ {dest} የያዙት ጉዞ ተስተካክሏል። አሁን {when} ይነሳል።"
+ADMIN_NEW_REPORT = "⚠️ አዲስ ሪፖርት\n{reporter} {reported}ን ሪፖርት አድርጓል፤ {reason}።\nለማየት የአስተዳደር Ops ገጽን ይክፈቱ።"
+SUPPORT_MSG = "📨 የድጋፍ መልዕክት\nከ {name} ({phone}):\n{msg}"
+REPORT_REASON_LABELS = {
+    "unsafe_driving": "አደገኛ አነዳድ",
+    "no_show": "አልመጣም",
+    "rude": "ባለጌ ወይም ተገቢ ያልሆነ",
+    "wrong_car": "መኪናው እንደተገለጸው አይደለም",
+    "driver_no_show": "ሹፌሩ አልመጣም",
+    "other": "ሌላ",
+}
 
 # --- women-only
 ASK_WOMEN_ONLY = "የሴቶች ምርጫ"

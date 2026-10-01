@@ -23,7 +23,7 @@ export function windowFor(when: string): [string, string] {
 }
 
 export const WHENS = [
-  { key: 'tomorrow_morning', icon: '🌅' },
-  { key: 'today', icon: '☀️' },
-  { key: 'weekend', icon: '📅' },
+  { key: 'tomorrow_morning', icon: 'sunrise' },
+  { key: 'today', icon: 'sun' },
+  { key: 'weekend', icon: 'calendar' },
 ] as const

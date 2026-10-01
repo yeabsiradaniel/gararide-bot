@@ -76,6 +76,59 @@ def test_add_driver_rejects_bad_input(client):
         "car_seats": 99}).status_code == 422
 
 
+def test_car_color_is_stored_and_reaches_the_rider(client):
+    conn, c = client
+    from gararide.places import place_by_slug
+    from gararide.trips import post_trip
+    from gararide.users import register, register_rider
+    c.post("/admin/drivers", headers=_auth(1001), json={
+        "phone": "0912345678", "full_name": "Test Driver", "tower": "B4",
+        "car_model": "Vitz", "car_color": "Silver", "plate": "3-AA 9", "car_seats": 4})
+    # roster keeps the colour
+    roster = c.get("/admin/drivers", headers=_auth(1001)).json()
+    assert next(d for d in roster if d["full_name"] == "Test Driver")["car_color"] == "Silver"
+    # it flows onto the driver's record, then onto the rider's trip card
+    drv = register(conn, telegram_id=4004, phone="0912345678")
+    assert drv["car_color"] == "Silver"
+    register_rider(conn, telegram_id=2002, phone="0900000002", full_name="R")
+    kaz = place_by_slug(conn, "kazanchis")["id"]
+    tid = post_trip(conn, driver_id=4004, dest_place_id=kaz, dropoff_place_ids=[kaz],
+                    depart_at=__import__("datetime").datetime(2999, 1, 1, 7), seats=2)
+    card = c.post("/bookings", headers=_auth(2002),
+                  json={"trip_id": tid, "to_place_id": kaz}).json()
+    assert card["car_color"] == "Silver"
+
+
+def test_admin_edits_a_driver_and_it_reaches_the_live_record(client):
+    conn, c = client
+    from gararide.users import get_user, register
+    c.post("/admin/drivers", headers=_auth(1001), json={
+        "phone": "0912345678", "full_name": "Old", "tower": "B4",
+        "car_model": "Vitz", "car_color": "Silver", "plate": "3-AA 9", "car_seats": 4})
+    register(conn, telegram_id=5005, phone="0912345678")  # already onboarded
+    r = c.patch("/admin/drivers/0912345678", headers=_auth(1001), json={
+        "phone": "0912345678", "full_name": "New Name", "tower": "C1",
+        "car_model": "Corolla", "car_color": "Blue", "plate": "3-AA 10", "car_seats": 3})
+    assert r.status_code == 200
+    d = next(x for x in c.get("/admin/drivers", headers=_auth(1001)).json()
+             if x["phone"].endswith("912345678"))
+    assert d["full_name"] == "New Name" and d["tower"] == "C1" and d["car_color"] == "Blue" and d["car_seats"] == 3
+    u = get_user(conn, 5005)  # live user updated too
+    assert u["full_name"] == "New Name" and u["car_color"] == "Blue" and u["car_seats"] == 3
+
+
+def test_editing_an_unknown_driver_is_404(client):
+    _, c = client
+    assert c.patch("/admin/drivers/0900000000", headers=_auth(1001), json={
+        "phone": "0900000000", "full_name": "X", "tower": "B", "car_seats": 4}).status_code == 404
+
+
+def test_non_admin_cannot_edit_a_driver(client):
+    _, c = client
+    assert c.patch("/admin/drivers/0912345678", headers=_auth(2001), json={
+        "phone": "0912345678", "full_name": "X", "tower": "B", "car_seats": 4}).status_code == 403
+
+
 def test_non_admin_cannot_add_a_driver(client):
     _, c = client
     r = c.post("/admin/drivers", headers=_auth(2001), json={

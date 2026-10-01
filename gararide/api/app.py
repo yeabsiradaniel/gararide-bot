@@ -6,8 +6,9 @@ from fastapi import Depends, FastAPI, Request
 from pydantic import BaseModel
 
 from ..config import CONFIG
+from ..copy import strings as copy_
 from ..places import all_places
-from ..users import reconcile_role, set_lang
+from ..users import get_user as get_user_, reconcile_role, set_consent, set_lang
 from . import admin, driver, rider, routes, saved
 from .deps import current_user, get_conn
 from .schemas import Me, Place
@@ -15,6 +16,10 @@ from .schemas import Me, Place
 
 class LangIn(BaseModel):
     lang: str
+
+
+class SupportIn(BaseModel):
+    message: str
 
 
 def create_app(conn, bot_token: str, admin_ids=frozenset(), lifespan=None) -> FastAPI:
@@ -34,18 +39,35 @@ def create_app(conn, bot_token: str, admin_ids=frozenset(), lifespan=None) -> Fa
         user = reconcile_role(conn, user["telegram_id"]) or user
         return Me(
             telegram_id=user["telegram_id"], full_name=user["full_name"],
-            role=user["role"],
+            phone=user["phone"], role=user["role"],
             tower=user["tower"] if user["role"] == "driver" else None,
             car_model=user["car_model"], plate=user["plate"],
             car_seats=user["car_seats"], women_only=bool(user["women_only"]),
             women_present=bool(user["women_present"]),
             is_admin=user["telegram_id"] in request.app.state.admin_ids,
-            lang=user["lang"])
+            lang=user["lang"], consented=user["consented_at"] is not None)
+
+    @app.post("/me/consent", status_code=204)
+    def me_consent(user=Depends(current_user), conn=Depends(get_conn)):
+        set_consent(conn, user["telegram_id"])
 
     @app.post("/me/lang", status_code=204)
     def me_lang(body: LangIn, user=Depends(current_user), conn=Depends(get_conn)):
         # Drives both the bot's messages and the Mini App's copy.
         set_lang(conn, user["telegram_id"], body.lang)
+
+    @app.post("/support", status_code=204)
+    def support(body: SupportIn, request: Request, user=Depends(current_user),
+                conn=Depends(get_conn)):
+        from .push import notify
+        text = (body.message or "").strip()[:800]
+        if not text:
+            return
+        for admin_id in request.app.state.admin_ids:
+            adm = get_user_(conn, admin_id)
+            lang = adm["lang"] if adm else "am"
+            notify(request.app, admin_id, copy_(lang).SUPPORT_MSG.format(
+                name=user["full_name"], phone=user["phone"], msg=text))
 
     @app.get("/places", response_model=list[Place])
     def places(user=Depends(current_user), conn=Depends(get_conn)):
