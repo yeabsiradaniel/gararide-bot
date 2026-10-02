@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { api, ApiError } from '../api'
 import type { MyTrip } from '../api'
 import { useNav } from '../nav'
-import { S, postErrorMsg } from '../strings'
+import { S, loc, postErrorMsg } from '../strings'
+import { postBlockReason } from '../util'
 import { Screen } from '../ui'
 import { Icon } from '../icons'
-import { haptic, notify } from '../telegram'
+import { haptic, notify, showAlert } from '../telegram'
 
 // Driver edits a posted trip: time, seats, note. Destination/route stay fixed
 // (that's a cancel + repost). Can't drop seats below riders already booked.
@@ -17,6 +18,7 @@ export default function EditTrip({ trip }: { trip: MyTrip }) {
   const [seats, setSeats] = useState(trip.seats_total)
   const [note, setNote] = useState(trip.note || '')
   const [busy, setBusy] = useState(false)
+  const reason = postBlockReason(departAt)
 
   async function save() {
     if (busy) return
@@ -26,15 +28,15 @@ export default function EditTrip({ trip }: { trip: MyTrip }) {
         depart_at: departAt.length === 16 ? departAt + ':00' : departAt,
         seats, note: note.trim() || null,
       })
-      notify('success'); alert(S.tripUpdated); nav.back()
+      notify('success'); await showAlert(S.tripUpdated); nav.back()
     } catch (e) {
       notify('error')
-      if (e instanceof ApiError && e.detail) alert(postErrorMsg(e.detail))
+      if (e instanceof ApiError && e.detail) showAlert(postErrorMsg(e.detail))
     } finally { setBusy(false) }
   }
 
   return (
-    <Screen eyebrow={`→ ${trip.dest_name_am}`} title={S.editTripTitle}>
+    <Screen eyebrow={`→ ${loc(trip.dest_name_am, trip.dest_name_en)}`} title={S.editTripTitle}>
       <label className="stack">
         <div className="tiny muted">{S.whenLeave}</div>
         <input className="field" type="datetime-local" value={departAt}
@@ -58,8 +60,9 @@ export default function EditTrip({ trip }: { trip: MyTrip }) {
                value={note} onChange={(e) => setNote(e.target.value)} />
       </label>
 
+      {reason && <div className="card" style={{ color: 'var(--sunset)' }}>{postErrorMsg(reason)}</div>}
       <div className="sticky-actions">
-        <button className="btn btn--grad" disabled={busy} onClick={save}>
+        <button className="btn btn--grad" disabled={busy || !!reason} onClick={save}>
           <Icon name="check" size={18} /> {S.saveChanges}
         </button>
       </div>

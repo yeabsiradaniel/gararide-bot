@@ -49,7 +49,7 @@ export default function RiderHome() {
         {nav.isAdmin && (
           <button className="act" onClick={() => go({ name: 'admin' })}>
             <span className="act__bubble"><Icon name="chart" size={24} /></span>
-            <span className="act__body"><div className="act__title">Ops</div></span>
+            <span className="act__body"><div className="act__title">{S.opsTitle}</div></span>
             <span className="act__go"><Icon name="chevronRight" size={20} /></span>
           </button>
         )}

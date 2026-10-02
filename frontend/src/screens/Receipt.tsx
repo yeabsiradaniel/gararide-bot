@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import type { HistoryRide } from '../api'
-import { api } from '../api'
-import { S } from '../strings'
+import { api, ApiError } from '../api'
+import { S, loc } from '../strings'
 import { Screen } from '../ui'
 import { Icon } from '../icons'
 import { fmtMoney, fmtWhen } from '../fmt'
-import { confirmDialog, haptic, notify } from '../telegram'
+import { confirmDialog, haptic, notify, showAlert } from '../telegram'
 
 // Receipt for a past ride (opened from My seats -> History). Completed rides can
 // be rated 👍/👎 — an admin-only signal the driver never sees.
@@ -31,8 +31,8 @@ export default function Receipt({ ride }: { ride: HistoryRide }) {
   async function flagNoShow() {
     if (!(await confirmDialog(S.driverNoShowConfirm))) return
     haptic()
-    try { await api.driverNoShow(ride.booking_id); setReported(true); notify('success'); alert(S.driverNoShowSent) }
-    catch { notify('error') }
+    try { await api.driverNoShow(ride.booking_id); setReported(true); notify('success'); showAlert(S.driverNoShowSent) }
+    catch (e) { notify('error'); if (e instanceof ApiError && e.status === 429) showAlert(S.rateLimited) }
   }
 
   return (
@@ -42,7 +42,7 @@ export default function Receipt({ ride }: { ride: HistoryRide }) {
           <span className="avatar avatar--ring"><span>{initial}</span></span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800, fontSize: 18 }}>{ride.driver_name}</div>
-            {ride.driver_tower && <div className="muted tiny">Tower {ride.driver_tower}</div>}
+            {ride.driver_tower && <div className="muted tiny">{S.towerWord} {ride.driver_tower}</div>}
           </div>
           <span className="badge" style={warm ? { background: '#FFE9DE', color: 'var(--sunset)' } : undefined}>{statusLabel}</span>
         </div>
@@ -52,7 +52,7 @@ export default function Receipt({ ride }: { ride: HistoryRide }) {
         </div>
 
         <div className="spread">
-          <span className="row" style={{ gap: 8 }}><Icon name="pin" size={18} style={{ color: 'var(--green)' }} /> {ride.dest_name_am}</span>
+          <span className="row" style={{ gap: 8 }}><Icon name="pin" size={18} style={{ color: 'var(--green)' }} /> {loc(ride.dest_name_am, ride.dest_name_en)}</span>
           <span className="price price--xl" style={{ fontSize: 26 }}>{fmtMoney(ride.fare)}</span>
         </div>
         {ride.paid && <div className="row tiny" style={{ gap: 6, color: 'var(--green)' }}><Icon name="check" size={14} /> {S.paid}</div>}

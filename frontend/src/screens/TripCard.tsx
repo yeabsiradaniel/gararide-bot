@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { TripCard as Card } from '../api'
 import { api } from '../api'
 import { useNav } from '../nav'
-import { S } from '../strings'
+import { S, loc } from '../strings'
 import { Countdown, Screen } from '../ui'
 import { Icon } from '../icons'
 import { fmtMoney, fmtWhen } from '../fmt'
@@ -30,7 +30,7 @@ export default function TripCard({ card, onGone }: { card: Card; onGone?: () => 
     const car = `${card.car_model || '—'}${card.car_color ? ` · ${card.car_color}` : ''}`
     shareText(S.shareRideMsg({
       driver: card.driver_name, car, plate: card.plate || '—',
-      dest: card.dest_name_am, when: fmtWhen(card.depart_at), bay: card.bay,
+      dest: loc(card.dest_name_am, card.dest_name_en), when: fmtWhen(card.depart_at), bay: card.bay,
     }))
   }
 
@@ -62,7 +62,7 @@ export default function TripCard({ card, onGone }: { card: Card; onGone?: () => 
             <div style={{ fontWeight: 800, fontSize: 18 }}>{card.driver_name}</div>
             <div className="row" style={{ gap: 8, marginTop: 4 }}>
               <span className="badge badge--verified"><Icon name="check" size={12} /> {S.verified}</span>
-              {card.driver_tower && <span className="muted tiny">Tower {card.driver_tower}</span>}
+              {card.driver_tower && <span className="muted tiny">{S.towerWord} {card.driver_tower}</span>}
             </div>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function TripCard({ card, onGone }: { card: Card; onGone?: () => 
         </div>
 
         <div className="spread">
-          <span className="row" style={{ gap: 8 }}><Icon name="pin" size={18} style={{ color: 'var(--green)' }} /> {card.dest_name_am}</span>
+          <span className="row" style={{ gap: 8 }}><Icon name="pin" size={18} style={{ color: 'var(--green)' }} /> {loc(card.dest_name_am, card.dest_name_en)}</span>
           <span className="price price--xl" style={{ fontSize: 26 }}>{fmtMoney(card.fare)}</span>
         </div>
         <div className="tiny muted">{S.payInCar('')}</div>

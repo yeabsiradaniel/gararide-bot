@@ -15,6 +15,7 @@ router = APIRouter()
 def my_saved(user=Depends(current_user), conn=Depends(get_conn)):
     return [{"id": s["id"], "dest_place_id": s["dest_place_id"],
              "dest_name_am": place_by_id(conn, s["dest_place_id"])["name_am"],
+             "dest_name_en": place_by_id(conn, s["dest_place_id"])["name_en"],
              "depart_time": s["depart_time"], "days_mask": s["days_mask"]}
             for s in saved_for(conn, user["telegram_id"])]
 

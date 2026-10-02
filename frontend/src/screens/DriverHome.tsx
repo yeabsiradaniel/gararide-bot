@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { api, ApiError } from '../api'
 import type { DriverRoute } from '../api'
 import { useNav } from '../nav'
-import { S, postErrorMsg } from '../strings'
+import { S, loc, postErrorMsg } from '../strings'
 import { Screen, useAsync } from '../ui'
 import { Icon } from '../icons'
 import { fmtDays, fmtHHMM } from '../fmt'
-import { confirmDialog, haptic, notify } from '../telegram'
+import { confirmDialog, haptic, notify, showAlert } from '../telegram'
 
 export default function DriverHome() {
   const nav = useNav()
@@ -23,12 +23,12 @@ export default function DriverHome() {
       nav.go({ name: 'myTrips' })
     } catch (e) {
       notify('error')
-      if (e instanceof ApiError && e.detail) alert(postErrorMsg(e.detail))
+      if (e instanceof ApiError && e.detail) showAlert(postErrorMsg(e.detail))
     } finally { setBusy(undefined) }
   }
 
   async function remove(r: DriverRoute) {
-    if (!(await confirmDialog(`${r.dest_name_am} · ${fmtHHMM(r.depart_time)}?`))) return
+    if (!(await confirmDialog(`${loc(r.dest_name_am, r.dest_name_en)} · ${fmtHHMM(r.depart_time)}?`))) return
     setBusy(r.id)
     try { await api.deleteRoute(r.id); routes.reload() } finally { setBusy(undefined) }
   }
@@ -52,7 +52,7 @@ export default function DriverHome() {
               <div key={r.id} className="card card--flat stack" style={{ gap: 12 }}>
                 <div className="spread">
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 700 }}>{r.dest_name_am}</div>
+                    <div style={{ fontWeight: 700 }}>{loc(r.dest_name_am, r.dest_name_en)}</div>
                     <div className="muted tiny">{fmtHHMM(r.depart_time)} · {r.seats} {S.seatsWord}{r.days_mask ? ` · ${fmtDays(r.days_mask)}` : ''}</div>
                   </div>
                   <button className="icon-btn" aria-label="remove" disabled={busy === r.id} onClick={() => remove(r)}><Icon name="trash" size={17} /></button>
@@ -96,7 +96,7 @@ export default function DriverHome() {
         {nav.isAdmin && (
           <button className="act" onClick={() => go({ name: 'admin' })}>
             <span className="act__bubble"><Icon name="chart" size={24} /></span>
-            <span className="act__body"><div className="act__title">Ops</div></span>
+            <span className="act__body"><div className="act__title">{S.opsTitle}</div></span>
             <span className="act__go"><Icon name="chevronRight" size={20} /></span>
           </button>
         )}

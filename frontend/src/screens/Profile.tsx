@@ -20,7 +20,7 @@ export default function Profile() {
             <div style={{ fontWeight: 800, fontSize: 18 }}>{me.full_name}</div>
             <div className="row" style={{ gap: 8, marginTop: 4 }}>
               <span className="badge badge--verified"><Icon name="check" size={12} /> {me.role === 'driver' ? S.roleDriver : S.roleRider}</span>
-              {me.role === 'driver' && me.tower && <span className="muted tiny">Tower {me.tower}</span>}
+              {me.role === 'driver' && me.tower && <span className="muted tiny">{S.towerWord} {me.tower}</span>}
             </div>
           </div>
         </div>

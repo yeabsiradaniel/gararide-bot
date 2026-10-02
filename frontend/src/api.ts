@@ -41,19 +41,19 @@ export interface Me {
 }
 export interface Place { id: number; slug: string; name_am: string; name_en: string; sort_order: number }
 export interface DropoffOptions { intermediate: Place[]; destination: Place }
-export interface FareLine { place_id: number; slug: string; name_am: string; fare: number }
+export interface FareLine { place_id: number; slug: string; name_am: string; name_en: string; fare: number }
 export interface PostedTrip { trip_id: number; dest_place_id: number; depart_at: string; seats: number; fares: FareLine[] }
-export interface Passenger { booking_id: number; name: string; tower: string | null; to_place_id: number; to_name_am: string; fare: number; phone: string; paid: boolean }
-export interface MyTrip { trip_id: number; dest_place_id: number; dest_name_am: string; depart_at: string; note: string | null; seats_total: number; seats_left: number; passengers: Passenger[]; arrived_at: string | null; dwell_minutes: number; otw_at: string | null; otw_eta: number | null }
-export interface NearRequest { request_id: number; rider_name: string; dest_place_id: number; dest_name_am: string; window_start: string; window_end: string }
+export interface Passenger { booking_id: number; name: string; tower: string | null; to_place_id: number; to_name_am: string; to_name_en: string; fare: number; phone: string; paid: boolean }
+export interface MyTrip { trip_id: number; dest_place_id: number; dest_name_am: string; dest_name_en: string; depart_at: string; note: string | null; seats_total: number; seats_left: number; passengers: Passenger[]; arrived_at: string | null; dwell_minutes: number; otw_at: string | null; otw_eta: number | null }
+export interface NearRequest { request_id: number; rider_name: string; dest_place_id: number; dest_name_am: string; dest_name_en: string; window_start: string; window_end: string }
 export interface Match { trip_id: number; driver_name: string; driver_tower: string | null; car_model: string | null; car_color: string | null; plate: string | null; depart_at: string; seats_left: number; fare: number }
-export interface NearMiss { trip_id: number; driver_name: string; driver_tower: string | null; car_model: string | null; car_color: string | null; plate: string | null; depart_at: string; fare: number; dest_place_id: number; dest_name_am: string; reason: 'earlier' | 'later' | 'partway' }
+export interface NearMiss { trip_id: number; driver_name: string; driver_tower: string | null; car_model: string | null; car_color: string | null; plate: string | null; depart_at: string; fare: number; dest_place_id: number; dest_name_am: string; dest_name_en: string; reason: 'earlier' | 'later' | 'partway' }
 export interface SearchResult { matches: Match[]; near_misses: NearMiss[]; demand_count: number }
-export interface TripCard { booking_id: number; trip_id: number; depart_at: string; bay: string; driver_name: string; driver_tower: string | null; car_model: string | null; car_color: string | null; plate: string | null; phone: string; dest_place_id: number; dest_name_am: string; fare: number; cancelled: boolean; arrived_at: string | null; dwell_minutes: number; otw_at: string | null; otw_eta: number | null }
-export interface SavedTrip { id: number; dest_place_id: number; dest_name_am: string; depart_time: string; days_mask: number }
-export interface HistoryRide { booking_id: number; depart_at: string; bay: string; driver_name: string; driver_tower: string | null; car_model: string | null; car_color: string | null; plate: string | null; dest_name_am: string; fare: number; status: 'booked' | 'completed' | 'cancelled' | 'no_show'; paid: boolean; rating: 1 | -1 | null }
-export interface DriverRoute { id: number; dest_place_id: number; dest_name_am: string; depart_time: string; seats: number; days_mask: number }
-export interface PostedRoute { trip_id: number; already: boolean; depart_at: string; seats: number; dest_name_am: string; fares: FareLine[] }
+export interface TripCard { booking_id: number; trip_id: number; depart_at: string; bay: string; driver_name: string; driver_tower: string | null; car_model: string | null; car_color: string | null; plate: string | null; phone: string; dest_place_id: number; dest_name_am: string; dest_name_en: string; fare: number; cancelled: boolean; arrived_at: string | null; dwell_minutes: number; otw_at: string | null; otw_eta: number | null }
+export interface SavedTrip { id: number; dest_place_id: number; dest_name_am: string; dest_name_en: string; depart_time: string; days_mask: number }
+export interface HistoryRide { booking_id: number; depart_at: string; bay: string; driver_name: string; driver_tower: string | null; car_model: string | null; car_color: string | null; plate: string | null; dest_name_am: string; dest_name_en: string; fare: number; status: 'booked' | 'completed' | 'cancelled' | 'no_show'; paid: boolean; rating: 1 | -1 | null }
+export interface DriverRoute { id: number; dest_place_id: number; dest_name_am: string; dest_name_en: string; depart_time: string; seats: number; days_mask: number }
+export interface PostedRoute { trip_id: number; already: boolean; depart_at: string; seats: number; dest_name_am: string; dest_name_en: string; fares: FareLine[] }
 export interface Ops { trips: number; seats: number; no_shows: number; open_requests: number; users: number }
 export interface Unmatched { dest_name: string; riders: number }
 export interface Report {

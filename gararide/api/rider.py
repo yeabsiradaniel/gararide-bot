@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from ..blocks import block
+from ..ratelimit import allow
 from ..ratings import rate, rating_for_booking
 from ..reports import REASONS, file_report
 from ..bookings import (BookingClosed, NotOffered, TripFull, book,
@@ -87,6 +88,7 @@ def search(dest_place_id: int, when: str = "tomorrow_morning",
             "depart_at": m.depart_at.isoformat(timespec="seconds"), "fare": m.fare,
             "dest_place_id": m.dest_place_id,
             "dest_name_am": place_by_id(conn, m.dest_place_id)["name_am"],
+            "dest_name_en": place_by_id(conn, m.dest_place_id)["name_en"],
             "reason": m.reason, **_driver_bits(m.driver_id)} for m in nms]
         result["demand_count"] = demand_count(conn, dest_place_id, start, end)
     return result
@@ -107,6 +109,7 @@ def _card(conn, booking, cancelled: bool = False) -> dict:
             "car_model": d["car_model"], "car_color": d["car_color"],
             "plate": d["plate"], "phone": d["phone"],
             "dest_place_id": dest["id"], "dest_name_am": dest["name_am"],
+            "dest_name_en": dest["name_en"],
             "fare": booking["fare"], "cancelled": cancelled,
             "arrived_at": trip["arrived_at"], "dwell_minutes": CONFIG.dwell_minutes,
             "otw_at": trip["otw_at"], "otw_eta": trip["otw_eta"]}
@@ -115,6 +118,21 @@ def _card(conn, booking, cancelled: bool = False) -> dict:
 @router.post("/bookings", status_code=201)
 def create_booking(body: Booking, request: Request, user=Depends(current_user),
                    conn=Depends(get_conn)):
+    # A rider can't hold two bookings whose departures overlap — no being in two
+    # cars at once. Checked against existing active bookings on other trips.
+    target = get_trip(conn, body.trip_id)
+    if target is not None and target["driver_id"] == user["telegram_id"]:
+        raise HTTPException(status_code=409, detail="own_trip")  # can't ride your own car
+    if target is not None:
+        window = CONFIG.overlap_window_minutes * 60
+        clash = conn.execute(
+            "SELECT 1 FROM bookings b JOIN trips t ON t.id = b.trip_id"
+            " WHERE b.rider_id = ? AND b.status = 'booked' AND b.trip_id <> ?"
+            "   AND ABS(strftime('%s', t.depart_at) - strftime('%s', ?)) < ?",
+            (user["telegram_id"], body.trip_id, target["depart_at"], window),
+        ).fetchone()
+        if clash is not None:
+            raise HTTPException(status_code=409, detail="time_conflict")
     try:
         b = book(conn, trip_id=body.trip_id, rider_id=user["telegram_id"],
                  to_place_id=body.to_place_id)
@@ -172,7 +190,8 @@ def my_history(user=Depends(current_user), conn=Depends(get_conn)):
                     "car_model": d["car_model"] if d else None,
                     "car_color": d["car_color"] if d else None,
                     "plate": d["plate"] if d else None,
-                    "dest_name_am": dest["name_am"], "fare": b["fare"],
+                    "dest_name_am": dest["name_am"], "dest_name_en": dest["name_en"],
+                    "fare": b["fare"],
                     "status": b["status"], "paid": bool(b["paid"]),
                     "rating": rating_for_booking(conn, b["id"])})
     return out
@@ -202,6 +221,8 @@ def driver_no_show(booking_id: int, request: Request, user=Depends(current_user)
                    conn=Depends(get_conn)):
     """Rider taps 'driver didn't show'. Files a report (reason driver_no_show) that
     reaches admins — the mirror of the driver marking a rider a no-show."""
+    if not allow(f"report:{user['telegram_id']}", 5, 300):
+        raise HTTPException(status_code=429, detail="rate_limited")
     b = conn.execute("SELECT * FROM bookings WHERE id = ?", (booking_id,)).fetchone()
     if b is None or b["rider_id"] != user["telegram_id"]:
         raise HTTPException(status_code=404, detail="no such booking")  # not yours
@@ -262,6 +283,8 @@ def report_driver(body: ReportBody, request: Request, user=Depends(current_user)
                   conn=Depends(get_conn)):
     if body.reason not in REASONS:
         raise HTTPException(status_code=422, detail="unknown reason")
+    if not allow(f"report:{user['telegram_id']}", 5, 300):
+        raise HTTPException(status_code=429, detail="rate_limited")
     trip = get_trip(conn, body.trip_id)
     if trip is None:
         raise HTTPException(status_code=404, detail="no such trip")

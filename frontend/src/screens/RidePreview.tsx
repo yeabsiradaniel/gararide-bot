@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { api, ApiError } from '../api'
 import { useNav } from '../nav'
 import type { Screen as Scr } from '../nav'
-import { S } from '../strings'
+import { S, loc } from '../strings'
 import { Screen } from '../ui'
 import { Icon } from '../icons'
 import { fmtMoney, fmtWhen } from '../fmt'
-import { haptic, notify } from '../telegram'
+import { haptic, notify, showAlert } from '../telegram'
 
 // Shown when a rider taps a driver in the results — driver + car, NO phone.
 // The seat is only taken (and the phone revealed) after "Take a seat".
@@ -21,15 +21,24 @@ export default function RidePreview({ p }: { p: Extract<Scr, { name: 'ridePrevie
     try {
       const card = await api.book(p.trip_id, p.to_place_id)
       notify('success')
+      // Land the booked card on top of home, so back goes Home (not the old
+      // search/preview, which is now stale after the seat is taken).
+      nav.reset({ name: nav.me.role === 'driver' ? 'driverHome' : 'riderHome' })
       nav.go({ name: 'tripCard', card })
     } catch (e) {
-      if (e instanceof ApiError && e.status === 409)
-        alert(e.detail === 'booking_closed' ? S.bookingClosed : S.seatTaken)
+      if (e instanceof ApiError && e.status === 409) {
+        const d = e.detail
+        await showAlert(d === 'booking_closed' ? S.bookingClosed
+          : d === 'time_conflict' ? S.timeConflict
+          : S.seatTaken)
+        // Seat filled / closed under them → bounce back to the (live) list.
+        if (d !== 'time_conflict') nav.back()
+      }
     } finally { setBusy(false) }
   }
 
   return (
-    <Screen eyebrow={fmtWhen(p.depart_at)} title={p.dest_name_am}>
+    <Screen eyebrow={fmtWhen(p.depart_at)} title={loc(p.dest_name_am, p.dest_name_en)}>
       <div className="card card--lift stack">
         <div className="row" style={{ gap: 14 }}>
           <span className="avatar avatar--ring"><span>{initial}</span></span>
@@ -37,7 +46,7 @@ export default function RidePreview({ p }: { p: Extract<Scr, { name: 'ridePrevie
             <div style={{ fontWeight: 800, fontSize: 18 }}>{p.driver_name}</div>
             <div className="row" style={{ gap: 8, marginTop: 4 }}>
               <span className="badge badge--verified"><Icon name="check" size={12} /> {S.verified}</span>
-              {p.driver_tower && <span className="muted tiny">Tower {p.driver_tower}</span>}
+              {p.driver_tower && <span className="muted tiny">{S.towerWord} {p.driver_tower}</span>}
             </div>
           </div>
         </div>
@@ -47,7 +56,7 @@ export default function RidePreview({ p }: { p: Extract<Scr, { name: 'ridePrevie
         </div>
 
         <div className="spread">
-          <span className="row" style={{ gap: 8 }}><Icon name="pin" size={18} style={{ color: 'var(--green)' }} /> {p.dest_name_am}</span>
+          <span className="row" style={{ gap: 8 }}><Icon name="pin" size={18} style={{ color: 'var(--green)' }} /> {loc(p.dest_name_am, p.dest_name_en)}</span>
           <span className="price price--xl" style={{ fontSize: 26 }}>{fmtMoney(p.fare)}</span>
         </div>
         {typeof p.seats_left === 'number' && <div className="tiny" style={{ color: 'var(--green)' }}>{p.seats_left} {S.seatsWord}</div>}

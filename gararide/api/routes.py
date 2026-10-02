@@ -26,6 +26,7 @@ class SaveRoute(BaseModel):
 def _out(conn, r) -> dict:
     return {"id": r["id"], "dest_place_id": r["dest_place_id"],
             "dest_name_am": place_by_id(conn, r["dest_place_id"])["name_am"],
+            "dest_name_en": place_by_id(conn, r["dest_place_id"])["name_en"],
             "depart_time": r["depart_time"], "seats": r["seats"],
             "days_mask": r["days_mask"]}
 
@@ -78,9 +79,10 @@ def post_route(route_id: int, user=Depends(require_driver), conn=Depends(get_con
     trip_id = existing["id"] if already else post_route_tomorrow(conn, r)
     origin = origin_place(conn)
     fares = [{"place_id": s["id"], "slug": s["slug"], "name_am": s["name_am"],
-              "fare": fare(conn, origin["id"], s["id"])}
+              "name_en": s["name_en"], "fare": fare(conn, origin["id"], s["id"])}
              for s in trip_dropoffs(conn, trip_id)]
     return {"trip_id": trip_id, "already": already, "depart_at": depart,
             "seats": r["seats"],
             "dest_name_am": place_by_id(conn, r["dest_place_id"])["name_am"],
+            "dest_name_en": place_by_id(conn, r["dest_place_id"])["name_en"],
             "fares": fares}

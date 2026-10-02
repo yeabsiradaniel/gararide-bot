@@ -9,7 +9,7 @@ export type Screen =
   | { name: 'requestsNear' }
   | { name: 'riderHome' }
   | { name: 'findRide'; mode: 'search' | 'request' }
-  | { name: 'results'; destId: number; destName: string; when: string }
+  | { name: 'results'; destId: number; destNameAm: string; destNameEn: string; when: string }
   | { name: 'tripCard'; card: TripCard }
   | { name: 'myBookings' }
   | { name: 'womenOnly' }
@@ -23,7 +23,8 @@ export type Screen =
   | { name: 'support' }
   | { name: 'broadcast' }
   | {
-      name: 'ridePreview'; trip_id: number; to_place_id: number; dest_name_am: string
+      name: 'ridePreview'; trip_id: number; to_place_id: number
+      dest_name_am: string; dest_name_en: string
       driver_name: string; driver_tower: string | null
       car_model: string | null; car_color: string | null; plate: string | null
       depart_at: string; fare: number; seats_left?: number

@@ -21,8 +21,8 @@ export default function Admin() {
   const o = ops.data!
 
   const stats: [string, number][] = [
-    ['Trips today', o.trips], ['Seats filled', o.seats], ['No-shows', o.no_shows],
-    ['Open requests', o.open_requests], ['Registered', o.users],
+    [S.statTrips, o.trips], [S.statSeats, o.seats], [S.statNoShows, o.no_shows],
+    [S.statRequests, o.open_requests], [S.statUsers, o.users],
   ]
 
   async function remove(d: RosterDriver) {
@@ -44,7 +44,7 @@ export default function Admin() {
   }
 
   return (
-    <Screen eyebrow={S.appName} title="Ops">
+    <Screen eyebrow={S.appName} title={S.opsTitle}>
       <div className="stack">
         {stats.map(([label, n]) => (
           <div key={label} className="spread card" style={{ padding: '12px 16px' }}>
@@ -56,7 +56,7 @@ export default function Admin() {
 
       {reports.data?.length ? (
         <>
-          <div className="eyebrow">Reports</div>
+          <div className="eyebrow">{S.reportsHeading}</div>
           <div className="stack">
             {reports.data.map((r) => (
               <div key={r.id} className="card stack" style={{ gap: 8, borderColor: 'var(--sunset)' }}>
@@ -66,10 +66,10 @@ export default function Admin() {
                 </div>
                 {r.note && <div className="muted tiny">“{r.note}”</div>}
                 <div className="spread">
-                  <span className="muted tiny">by {r.reporter_name}</span>
+                  <span className="muted tiny">{S.byWord} {r.reporter_name}</span>
                   <button className="btn btn--ghost" style={{ width: 'auto', padding: '6px 14px' }}
                           disabled={resolving === r.id} onClick={() => resolveReport(r.id)}>
-                    <Icon name="check" size={16} /> Resolve
+                    <Icon name="check" size={16} /> {S.resolveBtn}
                   </button>
                 </div>
               </div>
@@ -81,8 +81,8 @@ export default function Admin() {
       <button className="tile" onClick={() => { haptic(); nav.go({ name: 'broadcast' }) }}>
         <span className="tile__icon"><Icon name="megaphone" size={22} /></span>
         <span className="tile__body">
-          <div className="tile__title">Broadcast</div>
-          <div className="tile__sub">Message everyone / drivers / riders</div>
+          <div className="tile__title">{S.broadcastTitle}</div>
+          <div className="tile__sub">{S.broadcastSub}</div>
         </span>
       </button>
 
@@ -128,19 +128,19 @@ export default function Admin() {
         )
         : (!drivers.loading && <div className="muted tiny">{S.noDriversYet}</div>)}
 
-      <div className="eyebrow">Recruit drivers for</div>
+      <div className="eyebrow">{S.recruitHeading}</div>
       {unmatched.data?.length
         ? (
           <div className="stack">
             {unmatched.data.map((u) => (
               <div key={u.dest_name} className="spread card" style={{ padding: '12px 16px' }}>
                 <span>{u.dest_name}</span>
-                <span className="pill" style={{ background: 'var(--sunset)', color: '#fff', border: 'none' }}>{u.riders} waiting</span>
+                <span className="pill" style={{ background: 'var(--sunset)', color: '#fff', border: 'none' }}>{u.riders} {S.waitingWord}</span>
               </div>
             ))}
           </div>
         )
-        : <div className="muted tiny">No unmatched searches this week.</div>}
+        : <div className="muted tiny">{S.noUnmatched}</div>}
     </Screen>
   )
 }

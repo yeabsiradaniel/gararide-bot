@@ -38,6 +38,9 @@ class PilotConfig:
     post_lead_hours: int = 2
     # Booking closes this many hours before departure.
     booking_close_hours_before: int = 1
+    # A rider can't hold two bookings whose departures are within this window —
+    # they can't be in two cars at once.
+    overlap_window_minutes: int = 120
     reminder_minutes_before: int = 30
 
     # Near-miss search widens the requested window by this much on each side.

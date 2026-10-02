@@ -68,7 +68,7 @@ def create_trip(body: PostTrip, request: Request, user=Depends(require_driver),
     _notify_waiting_riders(request.app, conn, trip_id, body.depart_at)
     origin = origin_place(conn)
     fares = [{"place_id": s["id"], "slug": s["slug"], "name_am": s["name_am"],
-              "fare": fare(conn, origin["id"], s["id"])}
+              "name_en": s["name_en"], "fare": fare(conn, origin["id"], s["id"])}
              for s in dropoffs(conn, trip_id)]
     return {"trip_id": trip_id, "dest_place_id": body.dest_place_id,
             "depart_at": body.depart_at, "seats": body.seats, "fares": fares}
@@ -142,10 +142,12 @@ def my_trips(user=Depends(require_driver), conn=Depends(get_conn)):
                 "booking_id": b["id"], "name": r["full_name"],
                 "tower": r["tower"] or None, "to_place_id": b["to_place_id"],
                 "to_name_am": place_by_id(conn, b["to_place_id"])["name_am"],
+                "to_name_en": place_by_id(conn, b["to_place_id"])["name_en"],
                 "fare": b["fare"], "phone": r["phone"], "paid": bool(b["paid"])})
         out.append({
             "trip_id": t["id"], "dest_place_id": t["dest_place_id"],
             "dest_name_am": place_by_id(conn, t["dest_place_id"])["name_am"],
+            "dest_name_en": place_by_id(conn, t["dest_place_id"])["name_en"],
             "depart_at": t["depart_at"], "seats_total": t["seats_total"],
             "note": t["note"],
             "seats_left": seats_left(conn, t["id"]), "passengers": passengers,
@@ -218,6 +220,7 @@ def requests_near(user=Depends(require_driver), conn=Depends(get_conn)):
             "request_id": req["id"], "rider_name": r["full_name"],
             "dest_place_id": req["dest_place_id"],
             "dest_name_am": place_by_id(conn, req["dest_place_id"])["name_am"],
+            "dest_name_en": place_by_id(conn, req["dest_place_id"])["name_en"],
             "window_start": req["window_start"], "window_end": req["window_end"]})
     return out
 

@@ -34,3 +34,13 @@ def test_support_accepts_a_message(client):
 def test_support_ignores_blank(client):
     _, c = client
     assert c.post("/support", headers=_auth(2001), json={"message": "   "}).status_code == 204
+
+
+def test_support_is_rate_limited(client):
+    _, c = client
+    for _ in range(3):
+        assert c.post("/support", headers=_auth(2001),
+                      json={"message": "help"}).status_code == 204
+    # 4th within the window is blocked
+    assert c.post("/support", headers=_auth(2001),
+                  json={"message": "help"}).status_code == 429

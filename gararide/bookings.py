@@ -47,18 +47,26 @@ def book(conn: sqlite3.Connection, *, trip_id: int, rider_id: int,
     ).fetchone()
     if offered is None:
         raise NotOffered(to_place_id)
-    if seats_left(conn, trip_id) <= 0:
-        raise TripFull(trip_id)
 
     origin = origin_place(conn)
+    # Atomic seat claim: the INSERT fires only if a seat is still free, and the
+    # count is evaluated inside the same statement under SQLite's write lock — so
+    # two riders racing for the last seat cannot both succeed (overbooking race).
     cur = conn.execute(
         "INSERT INTO bookings"
         " (trip_id, rider_id, from_place_id, to_place_id, fare, created_at)"
-        " VALUES (?, ?, ?, ?, ?, ?)",
+        " SELECT ?, ?, ?, ?, ?, ?"
+        " WHERE (SELECT COUNT(*) FROM bookings"
+        "          WHERE trip_id = ? AND status = 'booked')"
+        "       < (SELECT seats_total FROM trips WHERE id = ? AND status = 'open')",
         (trip_id, rider_id, origin["id"], to_place_id,
          fare(conn, origin["id"], to_place_id),
-         clock.now().isoformat(timespec="seconds")),
+         clock.now().isoformat(timespec="seconds"),
+         trip_id, trip_id),
     )
+    if cur.rowcount == 0:
+        conn.rollback()
+        raise TripFull(trip_id)
     conn.commit()
     return conn.execute("SELECT * FROM bookings WHERE id = ?",
                         (cur.lastrowid,)).fetchone()

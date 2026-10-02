@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { api } from '../api'
 import { useNav } from '../nav'
 import type { Screen as Scr } from '../nav'
-import { S } from '../strings'
-import { ErrorView, Loader, Screen, useAsync } from '../ui'
+import { S, loc } from '../strings'
+import { ErrorView, Loader, Screen, useAsync, usePoll } from '../ui'
 import { Icon } from '../icons'
 import { fmtMoney, fmtWhen } from '../fmt'
 import { windowFor } from '../util'
@@ -11,8 +11,10 @@ import { haptic, notify } from '../telegram'
 
 export default function Results({ screen }: { screen: Extract<Scr, { name: 'results' }> }) {
   const nav = useNav()
-  const { destId, destName, when } = screen
+  const { destId, destNameAm, destNameEn, when } = screen
+  const destName = loc(destNameAm, destNameEn)
   const res = useAsync(() => api.search(destId, when), [destId, when])
+  usePoll(res.refresh)   // keep the list live so filled/expired rides drop off
   const [busy, setBusy] = useState(false)
 
   if (res.loading) return <Loader />
@@ -33,7 +35,7 @@ export default function Results({ screen }: { screen: Extract<Scr, { name: 'resu
           {data.matches.map((m) => (
             <button key={m.trip_id} className="card card--lift"
                     style={{ textAlign: 'start', cursor: 'pointer', width: '100%' }}
-                    onClick={() => { haptic(); nav.go({ name: 'ridePreview', trip_id: m.trip_id, to_place_id: destId, dest_name_am: destName, driver_name: m.driver_name, driver_tower: m.driver_tower, car_model: m.car_model, car_color: m.car_color, plate: m.plate, depart_at: m.depart_at, fare: m.fare, seats_left: m.seats_left }) }}>
+                    onClick={() => { haptic(); nav.go({ name: 'ridePreview', trip_id: m.trip_id, to_place_id: destId, dest_name_am: destNameAm, dest_name_en: destNameEn, driver_name: m.driver_name, driver_tower: m.driver_tower, car_model: m.car_model, car_color: m.car_color, plate: m.plate, depart_at: m.depart_at, fare: m.fare, seats_left: m.seats_left }) }}>
               <div className="row" style={{ gap: 13 }}>
                 <span className="avatar avatar--ring"><span>{(m.driver_name || '?').trim().charAt(0)}</span></span>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -42,7 +44,7 @@ export default function Results({ screen }: { screen: Extract<Scr, { name: 'resu
                     <span className="badge badge--verified"><Icon name="check" size={11} /> {S.verified}</span>
                   </div>
                   <div className="clock2" style={{ marginTop: 3 }}>
-                    {fmtWhen(m.depart_at)}{m.driver_tower ? ` · Tower ${m.driver_tower}` : ''}
+                    {fmtWhen(m.depart_at)}{m.driver_tower ? ` · ${S.towerWord} ${m.driver_tower}` : ''}
                   </div>
                   <div className="tiny" style={{ marginTop: 2, color: 'var(--green)' }}>{m.seats_left} {S.seatsWord}</div>
                 </div>
@@ -69,13 +71,13 @@ export default function Results({ screen }: { screen: Extract<Scr, { name: 'resu
             {data.near_misses.map((m) => (
               <button key={m.trip_id} className="card"
                       style={{ textAlign: 'start', cursor: 'pointer', width: '100%' }}
-                      onClick={() => { haptic(); nav.go({ name: 'ridePreview', trip_id: m.trip_id, to_place_id: m.dest_place_id, dest_name_am: m.dest_name_am, driver_name: m.driver_name, driver_tower: m.driver_tower, car_model: m.car_model, car_color: m.car_color, plate: m.plate, depart_at: m.depart_at, fare: m.fare }) }}>
+                      onClick={() => { haptic(); nav.go({ name: 'ridePreview', trip_id: m.trip_id, to_place_id: m.dest_place_id, dest_name_am: m.dest_name_am, dest_name_en: m.dest_name_en, driver_name: m.driver_name, driver_tower: m.driver_tower, car_model: m.car_model, car_color: m.car_color, plate: m.plate, depart_at: m.depart_at, fare: m.fare }) }}>
                 <div className="row" style={{ gap: 13 }}>
                   <span className="avatar avatar--ring"><span>{(m.driver_name || '?').trim().charAt(0)}</span></span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700 }}>{m.driver_name}</div>
                     <div className="clock2 row" style={{ gap: 6, marginTop: 3 }}>
-                      <Icon name="pin" size={14} style={{ color: 'var(--green)' }} /> {m.dest_name_am} · {fmtWhen(m.depart_at)}
+                      <Icon name="pin" size={14} style={{ color: 'var(--green)' }} /> {loc(m.dest_name_am, m.dest_name_en)} · {fmtWhen(m.depart_at)}
                     </div>
                   </div>
                   <div style={{ textAlign: 'end', flexShrink: 0 }}>

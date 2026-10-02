@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { api } from '../api'
+import { api, ApiError } from '../api'
 import { useNav } from '../nav'
 import { S } from '../strings'
 import { Screen } from '../ui'
 import { Icon } from '../icons'
-import { haptic, notify } from '../telegram'
+import { haptic, notify, showAlert } from '../telegram'
 
 // Message the admin/support account from inside the app.
 export default function Support() {
@@ -15,8 +15,8 @@ export default function Support() {
   async function send() {
     if (!msg.trim() || busy) return
     setBusy(true); haptic()
-    try { await api.support(msg.trim()); notify('success'); alert(S.supportSent); nav.back() }
-    catch { notify('error') }
+    try { await api.support(msg.trim()); notify('success'); await showAlert(S.supportSent); nav.back() }
+    catch (e) { notify('error'); if (e instanceof ApiError && e.status === 429) showAlert(S.rateLimited) }
     finally { setBusy(false) }
   }
 

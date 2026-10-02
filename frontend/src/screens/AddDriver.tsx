@@ -42,7 +42,7 @@ export default function AddDriver({ edit }: { edit?: RosterDriver }) {
       }
     } catch (e) {
       notify('error')
-      setErr(e instanceof ApiError ? (e.detail || `HTTP ${e.status}`) : 'ስህተት ተፈጥሯል')
+      setErr(e instanceof ApiError ? (e.detail || `HTTP ${e.status}`) : S.errorGeneric)
     } finally { setBusy(false) }
   }
 

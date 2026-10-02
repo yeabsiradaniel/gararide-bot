@@ -112,11 +112,17 @@ export default function App() {
     toggleLang,
   }), [me, back, lang, toggleLang])
 
-  // Telegram hardware back button follows the stack depth.
+  // Telegram hardware back button. Register the handler ONCE (so taps never
+  // stack up and pop multiple levels), and only toggle its visibility with depth.
+  useEffect(() => {
+    backButton.onClick(back)
+    return () => backButton.offClick(back)
+  }, [back])
   const canBack = stack.length > 1
   useEffect(() => {
-    if (canBack) { backButton.show(back); return () => backButton.hide(back) }
-  }, [canBack, back])
+    if (canBack) backButton.show()
+    else backButton.hide()
+  }, [canBack])
 
   const fab = <LangFab lang={lang} onToggle={toggleLang} />
 

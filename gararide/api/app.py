@@ -1,7 +1,7 @@
 """FastAPI application factory."""
 from __future__ import annotations
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 
 from pydantic import BaseModel
 
@@ -60,9 +60,12 @@ def create_app(conn, bot_token: str, admin_ids=frozenset(), lifespan=None) -> Fa
     def support(body: SupportIn, request: Request, user=Depends(current_user),
                 conn=Depends(get_conn)):
         from .push import notify
+        from ..ratelimit import allow
         text = (body.message or "").strip()[:800]
         if not text:
             return
+        if not allow(f"support:{user['telegram_id']}", 3, 300):
+            raise HTTPException(status_code=429, detail="rate_limited")
         for admin_id in request.app.state.admin_ids:
             adm = get_user_(conn, admin_id)
             lang = adm["lang"] if adm else "am"

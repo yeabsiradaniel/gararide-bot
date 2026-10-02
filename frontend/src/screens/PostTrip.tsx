@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react'
 import { api, ApiError } from '../api'
 import type { DropoffOptions, PostedTrip } from '../api'
 import { useNav } from '../nav'
-import { S, postErrorMsg } from '../strings'
+import { S, loc, postErrorMsg } from '../strings'
+import { postBlockReason } from '../util'
 import { Loader, Screen, useAsync } from '../ui'
 import { Icon } from '../icons'
 import { fmtMoney, fmtWhen } from '../fmt'
-import { haptic, notify } from '../telegram'
+import { haptic, notify, showAlert } from '../telegram'
 
 const SLOTS = ['06:45', '07:00', '07:15']
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -59,7 +60,7 @@ export default function PostTrip() {
     })
   }
 
-  function pickSlot(hhmm: string) { haptic(); setDepartAt(tomorrowAt(hhmm)); setStep('seats') }
+  function pickSlot(hhmm: string) { haptic(); setDepartAt(tomorrowAt(hhmm)) }  // select only
 
   async function submit(n: number) {
     setSeats(n); setBusy(true)
@@ -71,7 +72,7 @@ export default function PostTrip() {
       notify('success'); setPosted(t); setStep('done')
     } catch (e) {
       notify('error')
-      if (e instanceof ApiError && e.detail) alert(postErrorMsg(e.detail))
+      if (e instanceof ApiError && e.detail) showAlert(postErrorMsg(e.detail))
     } finally { setBusy(false) }
   }
 
@@ -84,7 +85,7 @@ export default function PostTrip() {
           {destinations.map((p) => (
             <button key={p.id} className="tile" onClick={() => pickDest(p.id)}>
               <span className="tile__icon"><Icon name="pin" size={22} /></span>
-              <span className="tile__body"><div className="tile__title">{p.name_am}</div></span>
+              <span className="tile__body"><div className="tile__title">{loc(p.name_am, p.name_en)}</div></span>
             </button>
           ))}
         </div>
@@ -102,13 +103,13 @@ export default function PostTrip() {
             return (
               <button key={p.id} className={`check ${on ? 'check--on' : ''}`} onClick={() => toggle(p.id)}>
                 <span className="check__box"><Icon name={on ? 'checkSquare' : 'square'} size={22} /></span>
-                <span>{p.name_am}</span>
+                <span>{loc(p.name_am, p.name_en)}</span>
               </button>
             )
           })}
           <div className="check check--fixed">
             <span className="check__box"><Icon name="pin" size={22} /></span>
-            <span>{S.destinationLabel}: <b>{opts.destination.name_am}</b></span>
+            <span>{S.destinationLabel}: <b>{loc(opts.destination.name_am, opts.destination.name_en)}</b></span>
           </div>
         </div>
         <div className="sticky-actions">
@@ -119,22 +120,30 @@ export default function PostTrip() {
   }
 
   if (step === 'when') {
+    const reason = departAt ? postBlockReason(departAt) : null
     return (
       <Screen eyebrow={S.postTrip} title={S.whenLeave}>
         <div className="stack">
-          {SLOTS.map((slot) => (
-            <button key={slot} className="tile" onClick={() => pickSlot(slot)}>
-              <span className="tile__icon"><Icon name="clock" size={22} /></span>
-              <span className="tile__body"><div className="tile__title">{slot}</div></span>
-            </button>
-          ))}
+          {SLOTS.map((slot) => {
+            const on = departAt === tomorrowAt(slot)
+            return (
+              <button key={slot} className={`tile${on ? ' tile--primary' : ''}`} onClick={() => pickSlot(slot)}>
+                <span className="tile__icon"><Icon name="clock" size={22} /></span>
+                <span className="tile__body"><div className="tile__title">{slot}</div></span>
+                {on && <span style={{ marginInlineStart: 'auto' }}><Icon name="check" size={18} /></span>}
+              </button>
+            )
+          })}
           <label className="card stack">
             <div className="tiny muted">{S.anotherTime}</div>
             <input className="field" type="datetime-local"
-                   onChange={(e) => e.target.value && setDepartAt(e.target.value + ':00')} />
-            <button className="btn btn--ghost" disabled={!departAt}
-                    onClick={() => setStep('seats')}>{S.continue_} <Icon name="chevronRight" size={20} /></button>
+                   onChange={(e) => setDepartAt(e.target.value ? e.target.value + ':00' : undefined)} />
           </label>
+        </div>
+        {reason && <div className="card" style={{ color: 'var(--sunset)' }}>{postErrorMsg(reason)}</div>}
+        <div className="sticky-actions">
+          <button className="btn" disabled={!departAt || !!reason}
+                  onClick={() => { haptic(); setStep('seats') }}>{S.continue_} <Icon name="chevronRight" size={20} /></button>
         </div>
       </Screen>
     )
@@ -171,14 +180,14 @@ export default function PostTrip() {
 
   if (step === 'done' && posted) {
     return (
-      <Screen eyebrow={S.posted} title={opts?.destination.name_am}>
+      <Screen eyebrow={S.posted} title={opts ? loc(opts.destination.name_am, opts.destination.name_en) : ''}>
         <div className="card stack">
           <div className="spread"><span className="muted">{fmtWhen(posted.depart_at)}</span>
             <span className="pill pill--on">{posted.seats} {S.seatsWord}</span></div>
           <div className="tiny muted">{S.ridersPay}</div>
           {posted.fares.map((f) => (
             <div key={f.place_id} className="spread">
-              <span>{f.name_am}</span><span className="price">{fmtMoney(f.fare)}</span>
+              <span>{loc(f.name_am, f.name_en)}</span><span className="price">{fmtMoney(f.fare)}</span>
             </div>
           ))}
         </div>

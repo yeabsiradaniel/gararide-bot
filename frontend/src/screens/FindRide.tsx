@@ -2,17 +2,17 @@ import { useMemo, useState } from 'react'
 import { api } from '../api'
 import type { Place } from '../api'
 import { useNav } from '../nav'
-import { S } from '../strings'
+import { S, loc } from '../strings'
 import { Loader, Screen, useAsync } from '../ui'
 import { Icon } from '../icons'
 import { WHENS, windowFor } from '../util'
 import { haptic, notify } from '../telegram'
 
-const whenLabel: Record<string, string> = {
-  tomorrow_morning: S.tomorrowMorning, today: S.today, weekend: S.weekend,
-}
-
 export default function FindRide({ mode }: { mode: 'search' | 'request' }) {
+  // Computed per render so it follows the live language, not import-time.
+  const whenLabel: Record<string, string> = {
+    tomorrow_morning: S.tomorrowMorning, today: S.today, weekend: S.weekend,
+  }
   const nav = useNav()
   const places = useAsync(() => api.places(), [])
   const [dest, setDest] = useState<Place>()
@@ -32,7 +32,7 @@ export default function FindRide({ mode }: { mode: 'search' | 'request' }) {
           {destinations.map((p) => (
             <button key={p.id} className="tile" onClick={() => { haptic(); setDest(p) }}>
               <span className="tile__icon"><Icon name="pin" size={22} /></span>
-              <span className="tile__body"><div className="tile__title">{p.name_am}</div></span>
+              <span className="tile__body"><div className="tile__title">{loc(p.name_am, p.name_en)}</div></span>
             </button>
           ))}
         </div>
@@ -43,7 +43,7 @@ export default function FindRide({ mode }: { mode: 'search' | 'request' }) {
   async function pickWhen(when: string) {
     haptic()
     if (mode === 'search') {
-      nav.go({ name: 'results', destId: dest!.id, destName: dest!.name_am, when })
+      nav.go({ name: 'results', destId: dest!.id, destNameAm: dest!.name_am, destNameEn: dest!.name_en, when })
       return
     }
     setBusy(true)
@@ -56,7 +56,7 @@ export default function FindRide({ mode }: { mode: 'search' | 'request' }) {
   }
 
   return (
-    <Screen eyebrow={dest.name_am} title={S.when}>
+    <Screen eyebrow={loc(dest.name_am, dest.name_en)} title={S.when}>
       <div className="stack">
         {WHENS.map((w) => (
           <button key={w.key} className="tile" disabled={busy} onClick={() => pickWhen(w.key)}>

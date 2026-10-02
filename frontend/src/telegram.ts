@@ -23,6 +23,7 @@ interface TgWebApp {
   setHeaderColor?(color: string): void
   setBackgroundColor?(color: string): void
   showConfirm?(message: string, callback: (ok: boolean) => void): void
+  showAlert?(message: string, callback?: () => void): void
   BackButton: BackButton
   HapticFeedback?: Haptic
 }
@@ -55,6 +56,15 @@ export function notify(type: 'error' | 'success' | 'warning'): void {
   try { tg?.HapticFeedback?.notificationOccurred(type) } catch { /* noop */ }
 }
 
+// Native Telegram alert (a clean popup — the browser's alert() prepends the host
+// domain, which looks broken). Resolves when dismissed. Falls back outside Telegram.
+export function showAlert(message: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (tg?.showAlert) tg.showAlert(message, () => resolve())
+    else { window.alert(message); resolve() }
+  })
+}
+
 // Native Telegram confirm dialog; falls back to the browser confirm outside Telegram.
 export function confirmDialog(message: string): Promise<boolean> {
   return new Promise((resolve) => {
@@ -80,15 +90,12 @@ export function shareText(text: string): void {
   try { navigator.clipboard.writeText(text) } catch { /* noop */ }
 }
 
+// Registration (onClick/offClick) is kept separate from visibility (show/hide)
+// so the click handler is attached exactly once for the app's lifetime — calling
+// onClick repeatedly would stack listeners and make one tap pop several screens.
 export const backButton = {
-  show(cb: () => void) {
-    if (!tg) return
-    tg.BackButton.onClick(cb)
-    tg.BackButton.show()
-  },
-  hide(cb: () => void) {
-    if (!tg) return
-    tg.BackButton.offClick(cb)
-    tg.BackButton.hide()
-  },
+  onClick(cb: () => void) { tg?.BackButton.onClick(cb) },
+  offClick(cb: () => void) { tg?.BackButton.offClick(cb) },
+  show() { tg?.BackButton.show() },
+  hide() { tg?.BackButton.hide() },
 }

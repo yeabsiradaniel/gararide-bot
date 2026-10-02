@@ -14,6 +14,7 @@ from pydantic import BaseModel, field_validator
 from ..copy import strings as copy
 from ..fmt import fmt_when
 from ..places import place_by_id
+from ..ratelimit import allow
 from ..ratings import tally_for_driver
 from ..reports import open_reports, resolve_report
 from ..users import (NotOnRoster, add_to_allowlist, get_user, lookup_allowlist,
@@ -181,6 +182,8 @@ def broadcast(body: Broadcast, request: Request, user=Depends(require_admin),
     text = (body.message or "").strip()[:1000]
     if not text:
         return {"sent": 0}
+    if not allow(f"broadcast:{user['telegram_id']}", 10, 300):
+        raise HTTPException(status_code=429, detail="rate_limited")
     where = {"drivers": "role='driver'", "riders": "role='rider'"}.get(body.audience, "1=1")
     rows = conn.execute(
         f"SELECT telegram_id FROM users WHERE active=1 AND {where}").fetchall()

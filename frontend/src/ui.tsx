@@ -11,7 +11,7 @@ export function ErrorView({ msg, onRetry }: { msg?: string; onRetry?: () => void
   return (
     <div className="center">
       <span className="empty-ic"><Icon name="alert" size={34} /></span>
-      <div className="muted">{msg || 'ስህተት ተፈጥሯል'}</div>
+      <div className="muted">{msg || S.errorGeneric}</div>
       {onRetry && <button className="btn btn--ghost" style={{ width: 'auto' }} onClick={onRetry}>{S.retry}</button>}
     </div>
   )
@@ -56,11 +56,22 @@ interface AsyncState<T> { data?: T; loading: boolean; error?: string }
 export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []) {
   const [state, setState] = useState<AsyncState<T>>({ loading: true })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const load = useCallback(() => {
-    setState({ loading: true })
+  const load = useCallback((silent = false) => {
+    if (!silent) setState({ loading: true })
     fn().then((data) => setState({ data, loading: false }))
-      .catch((e) => setState({ loading: false, error: e?.message || 'ስህተት' }))
+      .catch((e) => { if (!silent) setState({ loading: false, error: e?.message || S.errorGeneric }) })
   }, deps)
   useEffect(() => { load() }, [load])
-  return { ...state, reload: load }
+  // reload() shows the loader; refresh() updates in place (for background polling).
+  const reload = useCallback(() => load(false), [load])
+  const refresh = useCallback(() => load(true), [load])
+  return { ...state, reload, refresh }
+}
+
+// Silently re-fetch on an interval while mounted — keeps a list live without flicker.
+export function usePoll(refresh: () => void, ms = 15000) {
+  useEffect(() => {
+    const id = setInterval(refresh, ms)
+    return () => clearInterval(id)
+  }, [refresh, ms])
 }

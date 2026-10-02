@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { api } from '../api'
 import type { MyTrip } from '../api'
 import { useNav } from '../nav'
-import { S } from '../strings'
-import { Countdown, EmptyState, ErrorView, Loader, Screen, useAsync } from '../ui'
+import { S, loc } from '../strings'
+import { Countdown, EmptyState, ErrorView, Loader, Screen, useAsync, usePoll } from '../ui'
 import { Icon } from '../icons'
 import { fmtMoney, fmtPerson, fmtWhen } from '../fmt'
 import { callPhone, haptic, notify } from '../telegram'
@@ -24,6 +24,7 @@ function arrivesAt(t: MyTrip): number {
 export default function MyTrips() {
   const nav = useNav()
   const trips = useAsync(() => api.myTrips(), [])
+  usePoll(trips.refresh)   // live passenger count / seats as riders book or cancel
   const [picking, setPicking] = useState<number | null>(null)  // trip_id choosing an ETA
 
   if (trips.loading) return <Loader />
@@ -49,7 +50,7 @@ export default function MyTrips() {
             <div key={t.trip_id} className="card stack">
               <div className="spread">
                 <div>
-                  <div style={{ fontWeight: 700 }}>→ {t.dest_name_am}</div>
+                  <div style={{ fontWeight: 700 }}>→ {loc(t.dest_name_am, t.dest_name_en)}</div>
                   <div className="clock2">{fmtWhen(t.depart_at)}</div>
                 </div>
                 <div className="row" style={{ gap: 8, flexShrink: 0 }}>
@@ -65,7 +66,7 @@ export default function MyTrips() {
                 <div key={p.booking_id} className="spread" style={{ borderTop: '1px solid var(--line)', paddingTop: 10 }}>
                   <div>
                     <div>{fmtPerson(p.name, p.tower)}</div>
-                    <div className="tiny muted">→ {p.to_name_am} · <span className="price">{fmtMoney(p.fare)}</span></div>
+                    <div className="tiny muted">→ {loc(p.to_name_am, p.to_name_en)} · <span className="price">{fmtMoney(p.fare)}</span></div>
                   </div>
                   <div className="row">
                     <button className="pill" aria-label="call" onClick={() => callPhone(p.phone)}><Icon name="phone" size={16} /></button>

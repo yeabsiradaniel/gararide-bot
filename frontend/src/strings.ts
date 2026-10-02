@@ -10,6 +10,12 @@ const am = {
   home: 'መጀመሪያ',
   cancel: 'ተወው',
   continue_: 'ቀጥል',
+  towerWord: 'ማማ',
+  birr: 'ብር',
+  tomorrow: 'ነገ',
+  morning: 'ጠዋት',
+  afternoon: 'ከሰዓት',
+  errorGeneric: 'ስህተት ተፈጥሯል',
   profile: 'መገለጫ',
   profileTitle: 'የእኔ መገለጫ',
   langRow: 'ቋንቋ',
@@ -21,6 +27,7 @@ const am = {
   supportPlaceholder: 'እንዴት ልንረዳዎ?',
   sendMessage: 'መልዕክት ላክ',
   supportSent: 'መልዕክትዎ ተልኳል።',
+  rateLimited: 'በጣም ፈጣን ነው። ትንሽ ቆይተው እንደገና ይሞክሩ።',
 
   // consent
   // first-open walkthrough
@@ -177,6 +184,28 @@ const am = {
   noDriversYet: 'ገና ሹፌር የለም።',
   removeDriverConfirm: (name: string) => `${name}ን ከሹፌሮች ዝርዝር ማስወገድ ይፈልጋሉ? ክፍት መንገዶቻቸው ይሰረዛሉ።`,
   driverRemoved: 'ሹፌር ተወግዷል',
+  // admin / ops
+  opsTitle: 'ኦፕስ',
+  statTrips: 'ዛሬ ጉዞዎች',
+  statSeats: 'የተያዙ ወንበሮች',
+  statNoShows: 'ያልመጡ',
+  statRequests: 'ክፍት ጥያቄዎች',
+  statUsers: 'የተመዘገቡ',
+  reportsHeading: 'ሪፖርቶች',
+  resolveBtn: 'ፈታ',
+  byWord: 'በ',
+  recruitHeading: 'ሹፌር ይፈለጋል ለ',
+  waitingWord: 'በመጠባበቅ',
+  noUnmatched: 'በዚህ ሳምንት ያልተሟሉ ፍለጋዎች የሉም።',
+  broadcastTitle: 'ማሰራጫ',
+  broadcastSub: 'ለሁሉም / ለሹፌሮች / ለተሳፋሪዎች መልዕክት',
+  broadcastHint: 'ማስታወቂያ ይላኩ። በቦቱ በኩል ለሰዎች ይደርሳል።',
+  audEveryone: 'ሁሉም',
+  audDrivers: 'ሹፌሮች',
+  audRiders: 'ተሳፋሪዎች',
+  sendBroadcast: 'ማሰራጫ ላክ',
+  broadcastPlaceholder: 'መልዕክትዎ…',
+  sentTo: (n: number) => `ለ${n} ተልኳል።`,
 
   // boarding / dwell
   onMyWay: 'እየመጣሁ ነው',
@@ -191,6 +220,7 @@ const am = {
   // status badges
   cancelledBadge: 'ተሰርዟል',
   bookingClosed: 'የመያዣ ጊዜው አልፏል።',
+  timeConflict: 'በዚህ ሰዓት አካባቢ አስቀድመው የያዙት ጉዞ አለ። መጀመሪያ ይሰርዙት።',
 
   // history / receipts
   tabUpcoming: 'የሚመጡ',
@@ -215,6 +245,12 @@ const en: Strings = {
   home: 'Home',
   cancel: 'Cancel',
   continue_: 'Continue',
+  towerWord: 'Tower',
+  birr: 'birr',
+  tomorrow: 'Tomorrow',
+  morning: 'AM',
+  afternoon: 'PM',
+  errorGeneric: 'Something went wrong',
   profile: 'Profile',
   profileTitle: 'My profile',
   langRow: 'Language',
@@ -226,6 +262,7 @@ const en: Strings = {
   supportPlaceholder: 'How can we help?',
   sendMessage: 'Send message',
   supportSent: 'Your message was sent.',
+  rateLimited: 'That was quick — please wait a moment and try again.',
 
   howItWorks: 'How it works',
   getStarted: "Let's go",
@@ -371,6 +408,27 @@ const en: Strings = {
   noDriversYet: 'No drivers yet.',
   removeDriverConfirm: (name: string) => `Remove ${name} from the driver roster? Their open trips will be cancelled.`,
   driverRemoved: 'Driver removed',
+  opsTitle: 'Ops',
+  statTrips: 'Trips today',
+  statSeats: 'Seats filled',
+  statNoShows: 'No-shows',
+  statRequests: 'Open requests',
+  statUsers: 'Registered',
+  reportsHeading: 'Reports',
+  resolveBtn: 'Resolve',
+  byWord: 'by',
+  recruitHeading: 'Recruit drivers for',
+  waitingWord: 'waiting',
+  noUnmatched: 'No unmatched searches this week.',
+  broadcastTitle: 'Broadcast',
+  broadcastSub: 'Message everyone / drivers / riders',
+  broadcastHint: 'Send an announcement. It reaches people in the bot chat.',
+  audEveryone: 'Everyone',
+  audDrivers: 'Drivers',
+  audRiders: 'Riders',
+  sendBroadcast: 'Send broadcast',
+  broadcastPlaceholder: 'Your message…',
+  sentTo: (n: number) => `Sent to ${n}.`,
 
   onMyWay: "I'm on my way",
   howFarOut: 'How far out are you?',
@@ -383,6 +441,7 @@ const en: Strings = {
   boardingEnded: 'Boarding time is over',
   cancelledBadge: 'Cancelled',
   bookingClosed: 'Booking has closed for this trip.',
+  timeConflict: 'You already have a ride booked around this time. Cancel it first.',
 
   tabUpcoming: 'Upcoming',
   tabHistory: 'History',
@@ -399,9 +458,18 @@ const LANGS: Record<Lang, Strings> = { am, en }
 
 // eslint-disable-next-line import/no-mutable-exports
 export let S: Strings = am
+// eslint-disable-next-line import/no-mutable-exports
+export let activeLang: Lang = 'am'
 
 export function setActiveLang(lang: Lang): void {
   S = LANGS[lang]
+  activeLang = lang
+}
+
+// Pick a value by the active language, falling back to Amharic if the English
+// variant is missing. Used for data the backend sends in both languages (places).
+export function loc(am_: string, en_?: string | null): string {
+  return activeLang === 'en' && en_ ? en_ : am_
 }
 
 // Map a posting/editing error detail to a friendly, localized message.

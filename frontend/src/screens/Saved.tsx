@@ -1,6 +1,6 @@
 import { api } from '../api'
 import { useNav } from '../nav'
-import { S } from '../strings'
+import { S, loc } from '../strings'
 import { EmptyState, ErrorView, Loader, Screen, useAsync } from '../ui'
 import { Icon } from '../icons'
 import { haptic } from '../telegram'
@@ -23,8 +23,8 @@ export default function Saved() {
           <div key={s.id} className="card">
             <div className="spread">
               <button style={{ background: 'none', border: 'none', textAlign: 'start', font: 'inherit', cursor: 'pointer', flex: 1 }}
-                      onClick={() => { haptic(); nav.go({ name: 'results', destId: s.dest_place_id, destName: s.dest_name_am, when: 'tomorrow_morning' }) }}>
-                <div className="row" style={{ gap: 8, fontWeight: 700 }}><Icon name="repeat" size={18} style={{ color: 'var(--green)' }} /> {s.dest_name_am}</div>
+                      onClick={() => { haptic(); nav.go({ name: 'results', destId: s.dest_place_id, destNameAm: s.dest_name_am, destNameEn: s.dest_name_en, when: 'tomorrow_morning' }) }}>
+                <div className="row" style={{ gap: 8, fontWeight: 700 }}><Icon name="repeat" size={18} style={{ color: 'var(--green)' }} /> {loc(s.dest_name_am, s.dest_name_en)}</div>
                 <div className="tiny muted">{s.depart_time}</div>
               </button>
               <button className="icon-btn" aria-label="remove" onClick={() => remove(s.id)}><Icon name="x" size={16} /></button>

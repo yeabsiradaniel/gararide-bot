@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { api } from '../api'
 import { useNav } from '../nav'
-import { S } from '../strings'
+import { S, loc } from '../strings'
 import { EmptyState, ErrorView, Loader, Screen, useAsync } from '../ui'
 import { Icon } from '../icons'
 import { fmtMoney, fmtWhen } from '../fmt'
@@ -38,7 +38,7 @@ export default function MyBookings() {
                         <div key={c.booking_id} className="card" style={{ opacity: 0.65 }}>
                           <div className="spread">
                             <div>
-                              <div style={{ fontWeight: 700, textDecoration: 'line-through' }}>{c.driver_name} · → {c.dest_name_am}</div>
+                              <div style={{ fontWeight: 700, textDecoration: 'line-through' }}>{c.driver_name} · → {loc(c.dest_name_am, c.dest_name_en)}</div>
                               <div className="clock2">{fmtWhen(c.depart_at)}</div>
                             </div>
                             <span className="pill" style={{ background: 'var(--sunset)', color: '#fff', border: 'none' }}>{S.cancelledBadge}</span>
@@ -52,7 +52,7 @@ export default function MyBookings() {
                               onClick={() => { haptic(); nav.go({ name: 'tripCard', card: c }) }}>
                         <div className="spread">
                           <div>
-                            <div style={{ fontWeight: 700 }}>{c.driver_name} · → {c.dest_name_am}</div>
+                            <div style={{ fontWeight: 700 }}>{c.driver_name} · → {loc(c.dest_name_am, c.dest_name_en)}</div>
                             <div className="clock2">{fmtWhen(c.depart_at)}</div>
                           </div>
                           {boarding
@@ -77,7 +77,7 @@ export default function MyBookings() {
                             onClick={() => { haptic(); nav.go({ name: 'receipt', ride: h }) }}>
                       <div className="spread">
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontWeight: 700 }}>{h.driver_name} · → {h.dest_name_am}</div>
+                          <div style={{ fontWeight: 700 }}>{h.driver_name} · → {loc(h.dest_name_am, h.dest_name_en)}</div>
                           <div className="clock2">{fmtWhen(h.depart_at)}</div>
                         </div>
                         <div style={{ textAlign: 'end', flexShrink: 0 }}>

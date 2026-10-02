@@ -5,6 +5,14 @@ from gararide.places import seed_corridor
 from gararide.users import import_allowlist, register
 
 
+@pytest.fixture(autouse=True)
+def _reset_ratelimit():
+    # The limiter is process-global; clear it so tests don't bleed into each other.
+    from gararide import ratelimit
+    ratelimit._hits.clear()
+    yield
+
+
 @pytest.fixture
 def conn():
     c = connect(":memory:")

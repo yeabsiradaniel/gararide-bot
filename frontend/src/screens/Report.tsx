@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { api } from '../api'
+import { api, ApiError } from '../api'
 import { useNav } from '../nav'
 import { S } from '../strings'
 import { Screen } from '../ui'
 import { Icon } from '../icons'
-import { haptic, notify } from '../telegram'
+import { haptic, notify, showAlert } from '../telegram'
 
 // Rider reports the driver of a booked trip. Reaches an admin; the driver is
 // never told. Separate from the silent block ("Not this person").
@@ -20,8 +20,11 @@ export default function Report({ trip_id, driverName }: { trip_id: number; drive
     try {
       await api.report(trip_id, reason, note.trim() || undefined)
       notify('success')
-      alert(S.reportSent)
+      await showAlert(S.reportSent)
       nav.back()
+    } catch (e) {
+      notify('error')
+      if (e instanceof ApiError && e.status === 429) showAlert(S.rateLimited)
     } finally { setBusy(false) }
   }
 
