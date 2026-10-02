@@ -8,6 +8,7 @@ from ..driver_routes import (deactivate_route, get_route, post_route_tomorrow,
                              routes_for, save_route, tomorrow_departure)
 from ..fares import fare
 from ..places import origin_place, place_by_id
+from ..trips import post_block_reason
 from ..trips import dropoffs as trip_dropoffs
 from .deps import get_conn, require_driver
 
@@ -63,7 +64,11 @@ def remove_route(route_id: int, user=Depends(require_driver), conn=Depends(get_c
 @router.post("/routes/{route_id}/post")
 def post_route(route_id: int, user=Depends(require_driver), conn=Depends(get_conn)):
     r = _owned(conn, route_id, user)
-    depart = tomorrow_departure(r["depart_time"]).isoformat(timespec="seconds")
+    depart_dt = tomorrow_departure(r["depart_time"])
+    reason = post_block_reason(depart_dt)
+    if reason:
+        raise HTTPException(status_code=422, detail=reason)
+    depart = depart_dt.isoformat(timespec="seconds")
     # A double-tap must not post the same ride twice.
     existing = conn.execute(
         "SELECT id FROM trips WHERE driver_id = ? AND dest_place_id = ?"

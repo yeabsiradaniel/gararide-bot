@@ -20,17 +20,35 @@ class InvalidDropoff(Exception):
 
 
 def booking_open(depart: datetime, now: datetime | None = None) -> bool:
-    """Whether a trip still accepts bookings. The roster locks at the cutoff hour
-    (20:00) the night before departure, matching the evening confirmation. A trip
-    departing the same day it was posted stays open until it leaves (ad-hoc)."""
+    """Whether a trip still accepts bookings. Booking closes a fixed window before
+    departure (default 1h). For a next-day trip the roster also locks at the cutoff
+    hour (21:00) the night before. A same-day trip is bookable until that 1h window."""
     now = now or clock.now()
-    if depart <= now:
-        return False
+    if depart - now <= timedelta(hours=CONFIG.booking_close_hours_before):
+        return False  # within the pre-departure window (or already departed)
     if depart.date() <= now.date():
-        return True
+        return True  # same-day, still more than the window out
+    if CONFIG.booking_cutoff_hour >= 24:
+        return True  # night-before lock disabled
     lock = datetime.combine(depart.date() - timedelta(days=1),
                             time(hour=CONFIG.booking_cutoff_hour))
     return now < lock
+
+
+def post_block_reason(depart: datetime, now: datetime | None = None) -> str | None:
+    """Why a driver may NOT post/edit a trip for `depart`, or None if allowed.
+    Same-day: must be >= post_lead_hours ahead ('too_soon'). Next-day+: must be
+    before the night-before lock ('roster_locked')."""
+    now = now or clock.now()
+    if depart.date() <= now.date():
+        if depart - now < timedelta(hours=CONFIG.post_lead_hours):
+            return "too_soon"
+        return None
+    if CONFIG.booking_cutoff_hour >= 24:
+        return None
+    lock = datetime.combine(depart.date() - timedelta(days=1),
+                            time(hour=CONFIG.booking_cutoff_hour))
+    return None if now < lock else "roster_locked"
 
 
 def default_dropoffs(conn: sqlite3.Connection, dest_place_id: int) -> list[int]:

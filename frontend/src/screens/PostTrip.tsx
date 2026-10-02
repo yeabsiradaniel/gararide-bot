@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
-import { api } from '../api'
+import { api, ApiError } from '../api'
 import type { DropoffOptions, PostedTrip } from '../api'
 import { useNav } from '../nav'
-import { S } from '../strings'
+import { S, postErrorMsg } from '../strings'
 import { Loader, Screen, useAsync } from '../ui'
 import { Icon } from '../icons'
 import { fmtMoney, fmtWhen } from '../fmt'
@@ -69,6 +69,9 @@ export default function PostTrip() {
         depart_at: departAt!, seats: n, note: note || null,
       })
       notify('success'); setPosted(t); setStep('done')
+    } catch (e) {
+      notify('error')
+      if (e instanceof ApiError && e.detail) alert(postErrorMsg(e.detail))
     } finally { setBusy(false) }
   }
 

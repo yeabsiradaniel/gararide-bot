@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { api, ApiError } from '../api'
 import type { MyTrip } from '../api'
 import { useNav } from '../nav'
-import { S } from '../strings'
+import { S, postErrorMsg } from '../strings'
 import { Screen } from '../ui'
 import { Icon } from '../icons'
 import { haptic, notify } from '../telegram'
@@ -29,7 +29,7 @@ export default function EditTrip({ trip }: { trip: MyTrip }) {
       notify('success'); alert(S.tripUpdated); nav.back()
     } catch (e) {
       notify('error')
-      if (e instanceof ApiError && e.detail) alert(e.detail)
+      if (e instanceof ApiError && e.detail) alert(postErrorMsg(e.detail))
     } finally { setBusy(false) }
   }
 

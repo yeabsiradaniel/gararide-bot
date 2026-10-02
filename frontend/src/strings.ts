@@ -91,6 +91,8 @@ const am = {
   notePlaceholder: 'ለምሳሌ፡ በቦሌ ቡልቡላ አልፋለሁ',
   post: 'ለጥፍ',
   posted: 'ተለጥፏል',
+  rosterLocked: 'ለነገ የመለጠፊያ ሰዓት አልፏል (21:00)። ዛሬ ይለጥፉ ወይም ነገ ይሞክሩ።',
+  tooSoon: 'ቢያንስ ከመነሻ 2 ሰዓት በፊት መለጠፍ ያስፈልጋል።',
   editTripTitle: 'ጉዞ አስተካክል',
   tripUpdated: 'ጉዞው ተስተካክሏል',
   ridersPay: 'ተሳፋሪዎች የሚከፍሉት፡',
@@ -287,6 +289,8 @@ const en: Strings = {
   notePlaceholder: 'e.g. I pass through Bole Bulbula',
   post: 'Post',
   posted: 'Posted',
+  rosterLocked: 'Posting for tomorrow closes at 21:00. Post for today, or try again tomorrow.',
+  tooSoon: 'Post at least 2 hours before departure.',
   editTripTitle: 'Edit trip',
   tripUpdated: 'Trip updated',
   ridersPay: 'Riders pay:',
@@ -398,4 +402,11 @@ export let S: Strings = am
 
 export function setActiveLang(lang: Lang): void {
   S = LANGS[lang]
+}
+
+// Map a posting/editing error detail to a friendly, localized message.
+export function postErrorMsg(detail?: string): string {
+  if (detail === 'too_soon') return S.tooSoon
+  if (detail === 'roster_locked') return S.rosterLocked
+  return detail || ''
 }

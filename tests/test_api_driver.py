@@ -35,6 +35,17 @@ def test_dropoff_options_exclude_destination(client):
     assert r.json()["destination"]["slug"] == "kazanchis"
 
 
+def test_post_trip_rejects_too_soon(client):
+    conn, c = client
+    kaz = place_by_slug(conn, "kazanchis")["id"]
+    soon = (datetime.now() + timedelta(minutes=30)).isoformat(timespec="seconds")
+    r = c.post("/trips", headers=_auth(1001), json={
+        "dest_place_id": kaz, "dropoff_place_ids": [kaz],
+        "depart_at": soon, "seats": 2})   # same-day, under the 2h lead
+    assert r.status_code == 422
+    assert r.json()["detail"] == "too_soon"
+
+
 def test_post_trip_rejects_more_seats_than_car(client):
     conn, c = client
     kaz = place_by_slug(conn, "kazanchis")["id"]

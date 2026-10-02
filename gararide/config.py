@@ -5,6 +5,7 @@ outside this file or the seed data, it is a bug (UX spec section 4).
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 
 
@@ -28,7 +29,15 @@ class PilotConfig:
 
     # Operational rules from the execution plan.
     dwell_minutes: int = 4
-    booking_cutoff_hour: int = 20
+    # Night-before roster lock: future-day trips stop accepting bookings at this
+    # hour the evening before. Set GARARIDE_CUTOFF_HOUR=24 to disable the lock
+    # (tomorrow stays bookable right up to departure).
+    booking_cutoff_hour: int = int(os.environ.get("GARARIDE_CUTOFF_HOUR", "21"))
+    # Same-day trips must be posted at least this many hours before departure.
+    # (Next-day trips use the night-before lock above instead.)
+    post_lead_hours: int = 2
+    # Booking closes this many hours before departure.
+    booking_close_hours_before: int = 1
     reminder_minutes_before: int = 30
 
     # Near-miss search widens the requested window by this much on each side.
@@ -40,8 +49,6 @@ class PilotConfig:
 
 CONFIG = PilotConfig()
 
-
-import os
 
 ADMIN_IDS: frozenset[int] = frozenset(
     int(x) for x in os.environ.get("GARARIDE_ADMINS", "").split(",") if x.strip()

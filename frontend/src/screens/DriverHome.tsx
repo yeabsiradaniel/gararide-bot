@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { api } from '../api'
+import { api, ApiError } from '../api'
 import type { DriverRoute } from '../api'
 import { useNav } from '../nav'
-import { S } from '../strings'
+import { S, postErrorMsg } from '../strings'
 import { Screen, useAsync } from '../ui'
 import { Icon } from '../icons'
 import { fmtDays, fmtHHMM } from '../fmt'
@@ -21,7 +21,10 @@ export default function DriverHome() {
       const res = await api.postRoute(r.id)
       notify(res.already ? 'warning' : 'success')
       nav.go({ name: 'myTrips' })
-    } catch { notify('error') } finally { setBusy(undefined) }
+    } catch (e) {
+      notify('error')
+      if (e instanceof ApiError && e.detail) alert(postErrorMsg(e.detail))
+    } finally { setBusy(undefined) }
   }
 
   async function remove(r: DriverRoute) {

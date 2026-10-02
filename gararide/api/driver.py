@@ -14,9 +14,10 @@ from ..fares import fare
 from ..fmt import fmt_when
 from ..places import origin_place, place_by_id
 from ..requests import fill_request, open_requests, requests_matching_trip
-from ..trips import (InvalidDropoff, cancel_trip, dropoffs, dwell_expired,
-                     get_trip, intermediate_dropoffs, mark_arrived, mark_on_way,
-                     post_trip, seats_left, trips_by_driver, update_trip)
+from ..trips import (InvalidDropoff, booking_open, cancel_trip, dropoffs,
+                     dwell_expired, get_trip, intermediate_dropoffs, mark_arrived,
+                     mark_on_way, post_block_reason, post_trip, seats_left,
+                     trips_by_driver, update_trip)
 from ..users import get_user
 from .deps import get_conn, require_driver
 from .push import notify
@@ -53,8 +54,9 @@ def create_trip(body: PostTrip, request: Request, user=Depends(require_driver),
     cap = user["car_seats"] or 0
     if not 1 <= body.seats <= cap:
         raise HTTPException(status_code=422, detail=f"seats must be 1..{cap}")
-    if datetime.fromisoformat(body.depart_at) <= clock.now():
-        raise HTTPException(status_code=422, detail="depart time must be in the future")
+    reason = post_block_reason(datetime.fromisoformat(body.depart_at))
+    if reason:
+        raise HTTPException(status_code=422, detail=reason)
     try:
         trip_id = post_trip(
             conn, driver_id=user["telegram_id"], dest_place_id=body.dest_place_id,
@@ -100,9 +102,14 @@ def edit_trip(trip_id: int, body: EditTrip, request: Request,
         raise HTTPException(status_code=404, detail="no such trip")
     if trip["status"] != "open" or trip["arrived_at"]:
         raise HTTPException(status_code=409, detail="trip can no longer be edited")
+    if not booking_open(datetime.fromisoformat(trip["depart_at"])):
+        # The trip is already locked (within 1h of departure, or a next-day trip
+        # past the night-before cutoff) — too late to change it.
+        raise HTTPException(status_code=409, detail="roster_locked")
     when = datetime.fromisoformat(body.depart_at)
-    if when <= clock.now():
-        raise HTTPException(status_code=422, detail="depart time must be in the future")
+    reason = post_block_reason(when)
+    if reason:
+        raise HTTPException(status_code=422, detail=reason)
     cap = user["car_seats"] or 0
     booked = len(bookings_for_trip(conn, trip_id))
     if not booked <= body.seats <= cap:

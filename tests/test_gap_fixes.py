@@ -12,7 +12,8 @@ from gararide.matching import near_misses
 from gararide.places import place_by_slug
 from gararide.requests import post_request
 from gararide.scheduler import due_reminders
-from gararide.trips import booking_open, expire_trips, get_trip, post_trip
+from gararide.trips import (booking_open, expire_trips, get_trip, post_block_reason,
+                            post_trip)
 from gararide.users import add_to_allowlist, import_allowlist, register, register_rider
 from tests.test_api_auth import BOT_TOKEN, make_init_data
 
@@ -108,7 +109,7 @@ def test_posting_a_matching_trip_notifies_waiting_rider(env):
                  window_start=datetime.now(), window_end=_dt(180))
     c.post("/trips", headers=_auth(1001), json={
         "dest_place_id": k, "dropoff_place_ids": [], "seats": 2,
-        "depart_at": _dt(90).isoformat(timespec="seconds")})
+        "depart_at": _dt(150).isoformat(timespec="seconds")})  # >2h: passes the post gate
     assert any(cid == 2001 for cid, _ in sent)
     assert conn.execute("SELECT status FROM requests WHERE rider_id=2001").fetchone()[0] == "filled"
 
@@ -138,7 +139,7 @@ def test_expire_trips_closes_departed_open_trips(env):
 def test_past_ride_moves_to_history(env):
     conn, c, _ = env
     k = _kaz(conn)
-    tid = _trip(conn, _dt(60))
+    tid = _trip(conn, _dt(120))  # book with a valid (>1h) lead
     c.post("/bookings", headers=_auth(2001), json={"trip_id": tid, "to_place_id": k})
     # push the trip into the past, then expire it
     conn.execute("UPDATE trips SET depart_at=? WHERE id=?",
@@ -163,8 +164,12 @@ def test_near_misses_do_not_show_departed_trips(env):
 
 def test_reminder_is_sent_once(env):
     conn, _, _ = env
-    tid = _trip(conn, _dt(25))
+    tid = _trip(conn, _dt(120))  # book with a valid (>1h) lead
     bid = book(conn, trip_id=tid, rider_id=2001, to_place_id=_kaz(conn))["id"]
+    # then the departure draws near, so the reminder comes due
+    conn.execute("UPDATE trips SET depart_at=? WHERE id=?",
+                 (_dt(25).isoformat(timespec="seconds"), tid))
+    conn.commit()
     now = datetime.now()
     assert bid in due_reminders(conn, now)
     conn.execute("UPDATE bookings SET reminded=1 WHERE id=?", (bid,))
@@ -176,12 +181,28 @@ def test_reminder_is_sent_once(env):
 
 def test_booking_open_locks_the_night_before():
     depart = datetime(2026, 1, 2, 7, 0)                 # a 07:00 trip
-    assert booking_open(depart, datetime(2026, 1, 1, 19, 0)) is True   # before 20:00 eve
-    assert booking_open(depart, datetime(2026, 1, 1, 20, 30)) is False  # after cutoff
+    assert booking_open(depart, datetime(2026, 1, 1, 20, 30)) is True   # before 21:00 eve
+    assert booking_open(depart, datetime(2026, 1, 1, 21, 30)) is False  # after 21:00 cutoff
     # same-day ad-hoc trip stays open until it leaves
     assert booking_open(datetime(2026, 1, 1, 18, 0), datetime(2026, 1, 1, 9, 0)) is True
     # already departed
     assert booking_open(datetime(2026, 1, 1, 8, 0), datetime(2026, 1, 1, 9, 0)) is False
+
+
+def test_booking_closes_one_hour_before_departure():
+    depart = datetime(2026, 1, 1, 8, 0)
+    assert booking_open(depart, datetime(2026, 1, 1, 6, 0)) is True    # 2h before: open
+    assert booking_open(depart, datetime(2026, 1, 1, 7, 0)) is False   # 1h before: closed
+    assert booking_open(depart, datetime(2026, 1, 1, 7, 30)) is False  # within 1h: closed
+
+
+def test_post_block_reason_lead_and_lock():
+    now = datetime(2026, 1, 1, 8, 0)
+    assert post_block_reason(datetime(2026, 1, 1, 9, 0), now) == "too_soon"     # same-day <2h
+    assert post_block_reason(datetime(2026, 1, 1, 10, 0), now) is None          # same-day >=2h
+    assert post_block_reason(datetime(2026, 1, 2, 7, 0), now) is None           # next-day, pre-lock
+    assert post_block_reason(datetime(2026, 1, 2, 7, 0),
+                             datetime(2026, 1, 1, 21, 30)) == "roster_locked"   # next-day, post-21:00
 
 
 # ---- cancelled-booking history (#2) ---------------------------------------
@@ -199,7 +220,7 @@ def test_cancelled_ride_shows_in_my_bookings(env):
 
 def test_arrival_notifies_riders_and_returns_dwell(env):
     conn, c, sent = env
-    tid = _trip(conn, _dt(30))
+    tid = _trip(conn, _dt(120))  # book with a valid (>1h) lead
     c.post("/bookings", headers=_auth(2001), json={"trip_id": tid, "to_place_id": _kaz(conn)})
     sent.clear()
     r = c.post(f"/trips/{tid}/arrived", headers=_auth(1001))
