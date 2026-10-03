@@ -90,7 +90,12 @@ export default function App() {
         if (m.lang && m.lang !== (localStorage.getItem(LANG_KEY) as Lang)) {
           applyLang(m.lang, false)
         }
-        setStack([{ name: m.role === 'driver' ? 'driverHome' : 'riderHome' }])
+        const home: Screen = { name: m.role === 'driver' ? 'driverHome' : 'riderHome' }
+        // Deep link: a bot button can open the app straight to a screen (#seats / #trips).
+        const h = (window.location.hash || '').replace(/^#/, '')
+        const deep: Screen | null = h === 'seats' ? { name: 'myBookings' }
+          : h === 'trips' ? { name: 'myTrips' } : null
+        setStack(deep ? [home, deep] : [home])
         setPhase('ready')
       })
       .catch((e) => {

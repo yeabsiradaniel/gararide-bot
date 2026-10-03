@@ -6,7 +6,7 @@ import { S, loc } from '../strings'
 import { Screen } from '../ui'
 import { Icon } from '../icons'
 import { fmtMoney, fmtWhen } from '../fmt'
-import { haptic, notify, showAlert } from '../telegram'
+import { confirmDialog, haptic, notify, showAlert } from '../telegram'
 
 // Shown when a rider taps a driver in the results — driver + car, NO phone.
 // The seat is only taken (and the phone revealed) after "Take a seat".
@@ -28,11 +28,15 @@ export default function RidePreview({ p }: { p: Extract<Scr, { name: 'ridePrevie
     } catch (e) {
       if (e instanceof ApiError && e.status === 409) {
         const d = e.detail
-        await showAlert(d === 'booking_closed' ? S.bookingClosed
-          : d === 'time_conflict' ? S.timeConflict
-          : S.seatTaken)
-        // Seat filled / closed under them → bounce back to the (live) list.
-        if (d !== 'time_conflict') nav.back()
+        if (d === 'booking_closed') { await showAlert(S.bookingClosed); nav.back() }
+        else if (d === 'time_conflict') { await showAlert(S.timeConflict) }
+        else {
+          // Seat filled under them — offer the waitlist, then bounce to the list.
+          if (await confirmDialog(S.waitlistAsk)) {
+            try { await api.joinWaitlist(p.trip_id, p.to_place_id); await showAlert(S.waitlistJoined) } catch { /* noop */ }
+          }
+          nav.back()
+        }
       }
     } finally { setBusy(false) }
   }

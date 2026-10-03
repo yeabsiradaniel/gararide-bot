@@ -15,6 +15,8 @@ from ..blocks import block
 from ..ratelimit import allow
 from ..ratings import rate, rating_for_booking
 from ..reports import REASONS, file_report
+from ..fmt import fmt_when
+from .. import waitlist
 from ..bookings import (BookingClosed, NotOffered, TripFull, book,
                         bookings_for_rider, cancel_booking,
                         cancelled_upcoming_for_rider, history_for_rider)
@@ -167,6 +169,48 @@ def cancel_my_booking(booking_id: int, request: Request, user=Depends(current_us
         notify(request.app, driver["telegram_id"], copy(driver["lang"]).BOOKING_CANCELLED.format(
             name=user["full_name"],
             dest=_place_name(conn, row["to_place_id"], driver["lang"])))
+    _ping_waitlist(request.app, conn, trip)
+
+
+def _ping_waitlist(app, conn, trip) -> None:
+    """A seat just freed on this trip — let anyone waiting grab it."""
+    if trip is None:
+        return
+    when = fmt_when(datetime.fromisoformat(trip["depart_at"]))
+    for w in waitlist.for_trip(conn, trip["id"]):
+        r = get_user(conn, w["rider_id"])
+        if r:
+            c = copy(r["lang"])
+            notify(app, r["telegram_id"], c.SEAT_FREED.format(
+                dest=_place_name(conn, w["to_place_id"], r["lang"]), when=when),
+                buttons=[[(c.BTN_BOOK_NOW, f"wlbook:{trip['id']}:{w['to_place_id']}")]])
+
+
+@router.post("/bookings/{booking_id}/coming", status_code=204)
+def im_coming(booking_id: int, request: Request, user=Depends(current_user),
+              conn=Depends(get_conn)):
+    """Rider tells the driver they're on the way to the pickup."""
+    b = conn.execute(
+        "SELECT * FROM bookings WHERE id = ? AND rider_id = ? AND status = 'booked'",
+        (booking_id, user["telegram_id"])).fetchone()
+    if b is None:
+        raise HTTPException(status_code=404, detail="no such booking")
+    trip = get_trip(conn, b["trip_id"])
+    driver = get_user(conn, trip["driver_id"]) if trip else None
+    if driver:
+        notify(request.app, driver["telegram_id"],
+               copy(driver["lang"]).RIDER_COMING.format(name=user["full_name"]))
+
+
+class WaitlistBody(BaseModel):
+    trip_id: int
+    to_place_id: int
+
+
+@router.post("/waitlist", status_code=204)
+def join_waitlist(body: WaitlistBody, user=Depends(current_user), conn=Depends(get_conn)):
+    if get_trip(conn, body.trip_id) is not None:
+        waitlist.join(conn, body.trip_id, user["telegram_id"], body.to_place_id)
 
 
 @router.get("/bookings/mine")
@@ -185,6 +229,7 @@ def my_history(user=Depends(current_user), conn=Depends(get_conn)):
         d = get_user(conn, trip["driver_id"])
         dest = place_by_id(conn, b["to_place_id"])
         out.append({"booking_id": b["id"], "depart_at": trip["depart_at"], "bay": BAY,
+                    "dest_place_id": b["to_place_id"],
                     "driver_name": d["full_name"] if d else "—",
                     "driver_tower": (d["tower"] or None) if d else None,
                     "car_model": d["car_model"] if d else None,
@@ -251,12 +296,25 @@ class NewRequest(BaseModel):
 
 
 @router.post("/requests", status_code=201)
-def create_request(body: NewRequest, user=Depends(current_user),
+def create_request(body: NewRequest, request: Request, user=Depends(current_user),
                    conn=Depends(get_conn)):
     rid = post_request(conn, rider_id=user["telegram_id"],
                        dest_place_id=body.dest_place_id,
                        window_start=datetime.fromisoformat(body.window_start),
                        window_end=datetime.fromisoformat(body.window_end))
+    # Nudge drivers whose usual run goes there: one tap re-posts it.
+    count = demand_count(conn, body.dest_place_id,
+                         datetime.fromisoformat(body.window_start),
+                         datetime.fromisoformat(body.window_end))
+    for r in conn.execute(
+            "SELECT dr.id, u.telegram_id, u.lang FROM driver_routes dr"
+            " JOIN users u ON u.telegram_id = dr.driver_id"
+            " WHERE dr.active = 1 AND dr.dest_place_id = ?", (body.dest_place_id,)):
+        c = copy(r["lang"])
+        notify(request.app, r["telegram_id"],
+               c.DEMAND_NUDGE.format(count=count,
+                                     dest=_place_name(conn, body.dest_place_id, r["lang"])),
+               buttons=[[(c.BTN_POST_TODAY, f"postroute:{r['id']}")]])
     return {"request_id": rid}
 
 

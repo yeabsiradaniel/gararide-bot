@@ -12,7 +12,7 @@ from telegram import Update
 from telegram.ext import Application
 
 from .db import connect, init_schema
-from .handlers import launch, onboarding
+from .handlers import actions, launch, onboarding
 from .places import seed_corridor
 from .scheduler import register_jobs
 
@@ -34,7 +34,7 @@ def build_app(token: str, conn=None) -> Application:
            .connect_timeout(30.0).read_timeout(30.0)
            .get_updates_read_timeout(50.0).build())
     app.bot_data["conn"] = conn
-    for group in (onboarding, launch):
+    for group in (onboarding, launch, actions):
         for handler in group.handlers():
             app.add_handler(handler)
     register_jobs(app)

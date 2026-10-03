@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS trips (
     arrived_at     TEXT,
     otw_at         TEXT,
     otw_eta        INTEGER,
+    driver_reminded INTEGER NOT NULL DEFAULT 0,
+    summary_sent   INTEGER NOT NULL DEFAULT 0,
     created_at     TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_trips_depart ON trips(depart_at, status);
@@ -90,6 +92,7 @@ CREATE TABLE IF NOT EXISTS bookings (
                   CHECK (status IN ('booked', 'cancelled', 'no_show', 'completed')),
     paid          INTEGER NOT NULL DEFAULT 0,
     reminded      INTEGER NOT NULL DEFAULT 0,
+    rate_prompted INTEGER NOT NULL DEFAULT 0,
     created_at    TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_bookings_trip ON bookings(trip_id, status);
@@ -140,6 +143,15 @@ CREATE TABLE IF NOT EXISTS ratings (
     created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_ratings_ratee ON ratings(ratee_id);
+
+-- Riders waiting for a seat on a full trip. When a seat frees they're pinged.
+CREATE TABLE IF NOT EXISTS waitlist (
+    trip_id     INTEGER NOT NULL REFERENCES trips(id),
+    rider_id    INTEGER NOT NULL REFERENCES users(telegram_id),
+    to_place_id INTEGER NOT NULL REFERENCES places(id),
+    created_at  TEXT NOT NULL,
+    PRIMARY KEY (trip_id, rider_id)
+);
 
 CREATE TABLE IF NOT EXISTS saved_trips (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -214,6 +226,12 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE trips ADD COLUMN otw_at TEXT")       # 'on my way' stamp
     if "otw_eta" not in tcols:
         conn.execute("ALTER TABLE trips ADD COLUMN otw_eta INTEGER")   # minutes to pickup
+    if "driver_reminded" not in tcols:
+        conn.execute("ALTER TABLE trips ADD COLUMN driver_reminded INTEGER NOT NULL DEFAULT 0")
+    if "summary_sent" not in tcols:
+        conn.execute("ALTER TABLE trips ADD COLUMN summary_sent INTEGER NOT NULL DEFAULT 0")
+    if "rate_prompted" not in bcols:
+        conn.execute("ALTER TABLE bookings ADD COLUMN rate_prompted INTEGER NOT NULL DEFAULT 0")
     if "car_color" not in cols:
         conn.execute("ALTER TABLE users ADD COLUMN car_color TEXT")
     if "consented_at" not in cols:

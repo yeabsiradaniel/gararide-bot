@@ -6,7 +6,7 @@ import { S, loc } from '../strings'
 import { Countdown, Screen } from '../ui'
 import { Icon } from '../icons'
 import { fmtMoney, fmtWhen } from '../fmt'
-import { callPhone, haptic, notify, shareText } from '../telegram'
+import { callPhone, haptic, notify, shareText, showAlert } from '../telegram'
 
 // Shown after booking, and reused to render an upcoming booking.
 export default function TripCard({ card, onGone }: { card: Card; onGone?: () => void }) {
@@ -24,6 +24,12 @@ export default function TripCard({ card, onGone }: { card: Card; onGone?: () => 
     finally { setBusy(false) }
   }
   function done() { onGone ? onGone() : nav.reset({ name: 'riderHome' }) }
+
+  async function coming() {
+    haptic()
+    try { await api.imComing(card.booking_id); notify('success'); showAlert(S.imComingSent) }
+    catch { notify('error') }
+  }
 
   function share() {
     haptic()
@@ -80,6 +86,7 @@ export default function TripCard({ card, onGone }: { card: Card; onGone?: () => 
 
       <div className="stack">
         <button className="btn btn--grad" onClick={() => callPhone(card.phone)}><Icon name="phone" size={18} /> {S.call}</button>
+        <button className="btn btn--ghost" onClick={coming}><Icon name="user" size={18} /> {S.imComing}</button>
         <button className="btn btn--ghost" onClick={share}><Icon name="shield" size={18} /> {S.shareRide}</button>
         <button className="btn btn--ghost" disabled={busy} onClick={cancel}>{S.cancelBooking}</button>
         <button className="btn btn--danger"

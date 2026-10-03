@@ -51,7 +51,7 @@ export interface NearMiss { trip_id: number; driver_name: string; driver_tower: 
 export interface SearchResult { matches: Match[]; near_misses: NearMiss[]; demand_count: number }
 export interface TripCard { booking_id: number; trip_id: number; depart_at: string; bay: string; driver_name: string; driver_tower: string | null; car_model: string | null; car_color: string | null; plate: string | null; phone: string; dest_place_id: number; dest_name_am: string; dest_name_en: string; fare: number; cancelled: boolean; arrived_at: string | null; dwell_minutes: number; otw_at: string | null; otw_eta: number | null }
 export interface SavedTrip { id: number; dest_place_id: number; dest_name_am: string; dest_name_en: string; depart_time: string; days_mask: number }
-export interface HistoryRide { booking_id: number; depart_at: string; bay: string; driver_name: string; driver_tower: string | null; car_model: string | null; car_color: string | null; plate: string | null; dest_name_am: string; dest_name_en: string; fare: number; status: 'booked' | 'completed' | 'cancelled' | 'no_show'; paid: boolean; rating: 1 | -1 | null }
+export interface HistoryRide { booking_id: number; depart_at: string; bay: string; dest_place_id: number; driver_name: string; driver_tower: string | null; car_model: string | null; car_color: string | null; plate: string | null; dest_name_am: string; dest_name_en: string; fare: number; status: 'booked' | 'completed' | 'cancelled' | 'no_show'; paid: boolean; rating: 1 | -1 | null }
 export interface DriverRoute { id: number; dest_place_id: number; dest_name_am: string; dest_name_en: string; depart_time: string; seats: number; days_mask: number }
 export interface PostedRoute { trip_id: number; already: boolean; depart_at: string; seats: number; dest_name_am: string; dest_name_en: string; fares: FareLine[] }
 export interface Ops { trips: number; seats: number; no_shows: number; open_requests: number; users: number }
@@ -101,6 +101,7 @@ export const api = {
     req<SearchResult>(`/trips/search?dest_place_id=${destId}&when=${when}`),
   book: (trip_id: number, to_place_id: number) => post<TripCard>('/bookings', { trip_id, to_place_id }),
   cancelBooking: (id: number) => post<null>(`/bookings/${id}/cancel`),
+  imComing: (id: number) => post<null>(`/bookings/${id}/coming`),
   myBookings: () => req<TripCard[]>('/bookings/mine'),
   history: () => req<HistoryRide[]>('/bookings/history'),
   rate: (bookingId: number, value: 1 | -1) => post<null>(`/bookings/${bookingId}/rate`, { value }),
@@ -108,6 +109,8 @@ export const api = {
   postRequest: (dest_place_id: number, window_start: string, window_end: string) =>
     post<{ request_id: number }>('/requests', { dest_place_id, window_start, window_end }),
   block: (trip_id: number) => post<null>('/blocks', { trip_id }),
+  joinWaitlist: (trip_id: number, to_place_id: number) =>
+    post<null>('/waitlist', { trip_id, to_place_id }),
   report: (trip_id: number, reason: string, note?: string) =>
     post<{ report_id: number }>('/reports', { trip_id, reason, note }),
   setWomenOnly: (women_only: boolean, women_present: boolean) =>

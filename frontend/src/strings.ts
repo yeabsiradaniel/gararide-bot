@@ -125,6 +125,9 @@ const am = {
   bayAlpha: 'Bay Alpha, ዋና በር',
   payInCar: (amt: string) => `${amt} · በመኪና ውስጥ ይክፈሉ`,
   call: 'ደውል',
+  imComing: 'እየመጣሁ ነው',
+  imComingSent: 'ሹፌሩ ተነገረው።',
+  rideAgain: 'እንደገና ተሳፈር',
   shareRide: 'የጉዞ ዝርዝር አጋራ',
   shareRideMsg: (d: { driver: string; car: string; plate: string; dest: string; when: string; bay: string }) =>
     `ጋራ ራይድ · የእኔ ጉዞ\n`
@@ -221,6 +224,8 @@ const am = {
   cancelledBadge: 'ተሰርዟል',
   bookingClosed: 'የመያዣ ጊዜው አልፏል።',
   timeConflict: 'በዚህ ሰዓት አካባቢ አስቀድመው የያዙት ጉዞ አለ። መጀመሪያ ይሰርዙት።',
+  waitlistAsk: 'ቦታው ተይዟል። ቦታ ሲከፈት እንድናሳውቅዎ ይፈልጋሉ?',
+  waitlistJoined: 'ቦታ ሲከፈት እናሳውቅዎታለን።',
 
   // history / receipts
   tabUpcoming: 'የሚመጡ',
@@ -351,6 +356,9 @@ const en: Strings = {
   bayAlpha: 'Bay Alpha, main gate',
   payInCar: (amt: string) => `${amt} · pay in the car`,
   call: 'Call',
+  imComing: "I'm on my way",
+  imComingSent: 'The driver has been told.',
+  rideAgain: 'Ride again',
   shareRide: 'Share ride details',
   shareRideMsg: (d) =>
     `Gara Ride · my ride\n`
@@ -442,6 +450,8 @@ const en: Strings = {
   cancelledBadge: 'Cancelled',
   bookingClosed: 'Booking has closed for this trip.',
   timeConflict: 'You already have a ride booked around this time. Cancel it first.',
+  waitlistAsk: "That seat's gone. Want us to notify you if one frees?",
+  waitlistJoined: "We'll ping you if a seat frees.",
 
   tabUpcoming: 'Upcoming',
   tabHistory: 'History',

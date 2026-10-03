@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { HistoryRide } from '../api'
 import { api, ApiError } from '../api'
+import { useNav } from '../nav'
 import { S, loc } from '../strings'
 import { Screen } from '../ui'
 import { Icon } from '../icons'
@@ -10,6 +11,7 @@ import { confirmDialog, haptic, notify, showAlert } from '../telegram'
 // Receipt for a past ride (opened from My seats -> History). Completed rides can
 // be rated 👍/👎 — an admin-only signal the driver never sees.
 export default function Receipt({ ride }: { ride: HistoryRide }) {
+  const nav = useNav()
   const warm = ride.status === 'no_show' || ride.status === 'cancelled'
   const statusLabel = ride.status === 'no_show' ? S.statusNoShow
     : ride.status === 'cancelled' ? S.cancelledBadge : S.statusCompleted
@@ -73,6 +75,10 @@ export default function Receipt({ ride }: { ride: HistoryRide }) {
           </div>
         </div>
       )}
+
+      <button className="btn btn--ghost" onClick={() => { haptic(); nav.go({ name: 'results', destId: ride.dest_place_id, destNameAm: ride.dest_name_am, destNameEn: ride.dest_name_en, when: 'tomorrow_morning' }) }}>
+        <Icon name="repeat" size={18} /> {S.rideAgain}
+      </button>
 
       {ride.status === 'completed' && !reported && (
         <button className="btn btn--danger" onClick={flagNoShow}>
