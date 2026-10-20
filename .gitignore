@@ -21,7 +21,7 @@ htmlcov/
 # SQLite databases (runtime data)
 *.db
 *.sqlite
-*.sqlite3
+*.sqlite3*
 
 # Secrets — the bot token never gets committed
 .env

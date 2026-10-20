@@ -233,6 +233,7 @@ h2 { font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
 }
 .btn--quiet { background: transparent; color: var(--muted); font-weight: 600; box-shadow: none; }
 .btn--danger { background: transparent; color: var(--danger); font-weight: 600; box-shadow: none; }
+.btn--sm { width: auto; min-height: 36px; padding: 0 14px; font-size: 14px; border-radius: 999px; }
 .btn[disabled] { opacity: .5; pointer-events: none; box-shadow: none; }
 
 /* thumbs up/down on a completed-ride receipt (admin-only signal) */
@@ -423,17 +424,29 @@ h2 { font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
   transition: transform .12s var(--ease), background .14s, border-color .14s;
 }
 .top-fab:active { transform: scale(.95); }
-
-.lang-fab {
-  position: fixed; top: 12px; right: 12px; z-index: 200;
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 7px 12px; border-radius: 999px;
-  background: var(--card);
-  border: 1.5px solid var(--line); color: var(--ink);
-  font-family: var(--font-latin); font-size: 13px; font-weight: 800; cursor: pointer;
-  box-shadow: var(--shadow-sm);
+.top-fab--icon {
+  width: 36px; min-height: 36px; padding: 0; justify-content: center; border-radius: 50%;
 }
-.lang-fab:active { transform: scale(.95); }
+
+.pill-strip {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+
+.slot-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+.slot-chip {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 13px 8px; border-radius: var(--r-md); border: 1.5px solid var(--line);
+  background: var(--card); color: var(--ink); font-family: var(--font-latin);
+  font-weight: 700; font-size: 16px; cursor: pointer;
+  transition: transform .12s var(--ease), border-color .14s, background .14s, color .14s;
+}
+.slot-chip:active { transform: scale(.96); }
+.slot-chip--on {
+  border-color: var(--green); background: var(--surface); color: var(--green-text);
+  box-shadow: 0 0 0 1px var(--green);
+}
 
 .check {
   display: flex; align-items: center; gap: 12px; padding: 15px 15px;

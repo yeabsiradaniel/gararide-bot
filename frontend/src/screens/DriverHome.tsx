@@ -46,18 +46,24 @@ export default function DriverHome() {
         </header>
 
         {routes.data?.length ? (
-          <div className="stack">
+          <div className="stack" style={{ gap: 8 }}>
             <div className="section-label">{S.myRoutes}</div>
             {routes.data.map((r) => (
-              <div key={r.id} className="card card--flat stack" style={{ gap: 12 }}>
-                <div className="spread">
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 700 }}>{loc(r.dest_name_am, r.dest_name_en)}</div>
+              <div key={r.id} className="card card--flat" style={{ padding: '12px 14px' }}>
+                <div className="spread" style={{ alignItems: 'center' }}>
+                  <div className="min-w-0" style={{ flex: 1, paddingRight: 8 }}>
+                    <div className="truncate" style={{ fontWeight: 700 }}>{loc(r.dest_name_am, r.dest_name_en)}</div>
                     <div className="muted tiny">{fmtHHMM(r.depart_time)} · {r.seats} {S.seatsWord}{r.days_mask ? ` · ${fmtDays(r.days_mask)}` : ''}</div>
                   </div>
-                  <button className="icon-btn" aria-label="remove" disabled={busy === r.id} onClick={() => remove(r)}><Icon name="trash" size={17} /></button>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    <button className="btn btn--sm btn--grad" disabled={busy === r.id} onClick={() => postTomorrow(r)}>
+                      {S.postTomorrow}
+                    </button>
+                    <button className="icon-btn" style={{ width: 34, height: 34 }} aria-label="remove" disabled={busy === r.id} onClick={() => remove(r)}>
+                      <Icon name="trash" size={15} />
+                    </button>
+                  </div>
                 </div>
-                <button className="btn btn--grad" disabled={busy === r.id} onClick={() => postTomorrow(r)}>{S.postTomorrow}</button>
               </div>
             ))}
           </div>

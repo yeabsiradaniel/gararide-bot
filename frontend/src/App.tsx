@@ -29,13 +29,12 @@ function TopControls({
   return (
     <div className="top-fabs">
       <button
-        className="top-fab"
+        className="top-fab top-fab--icon"
         onClick={onToggleTheme}
         aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
       >
-        <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={16} />
-        <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+        <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={17} />
       </button>
 
       <button
@@ -44,8 +43,8 @@ function TopControls({
         aria-label={lang === 'am' ? 'Switch to English' : 'Switch to Amharic'}
         title={lang === 'am' ? 'Switch to English' : 'Switch to Amharic'}
       >
-        <Icon name={lang === 'am' ? 'flagUS' : 'flagET'} size={17} />
-        <span>{lang === 'am' ? 'EN' : 'አማ'}</span>
+        <Icon name={lang === 'am' ? 'flagUS' : 'flagET'} size={16} />
+        <span style={{ fontSize: 12 }}>{lang === 'am' ? 'EN' : 'አማ'}</span>
       </button>
     </div>
   )

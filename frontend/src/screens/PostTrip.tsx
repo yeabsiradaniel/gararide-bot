@@ -132,16 +132,22 @@ export default function PostTrip() {
     return (
       <Screen eyebrow={S.postTrip} title={S.whenLeave}>
         <div className="stack">
-          {SLOTS.map((slot) => {
-            const on = departAt === tomorrowAt(slot)
-            return (
-              <button key={slot} className={`tile${on ? ' tile--primary' : ''}`} onClick={() => pickSlot(slot)}>
-                <span className="tile__icon"><Icon name="clock" size={22} /></span>
-                <span className="tile__body"><div className="tile__title">{slot}</div></span>
-                {on && <span style={{ marginInlineStart: 'auto' }}><Icon name="check" size={18} /></span>}
-              </button>
-            )
-          })}
+          <div className="slot-grid">
+            {SLOTS.map((slot) => {
+              const on = departAt === tomorrowAt(slot)
+              return (
+                <button
+                  key={slot}
+                  type="button"
+                  className={`slot-chip${on ? ' slot-chip--on' : ''}`}
+                  onClick={() => pickSlot(slot)}
+                >
+                  <Icon name="clock" size={16} />
+                  <span>{slot}</span>
+                </button>
+              )
+            })}
+          </div>
           <label className="card stack">
             <div className="tiny muted">{S.anotherTime}</div>
             <input className="field" type="datetime-local"

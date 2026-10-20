@@ -9,14 +9,6 @@ export default function RiderHome() {
   const go = (s: Parameters<typeof nav.go>[0]) => { haptic(); nav.go(s) }
   const first = (nav.me.full_name || '').split(' ')[0]
 
-  const actions = [
-    { name: 'findRide', icon: 'search', title: S.findRide, sub: S.findRideSub, hero: true, on: () => go({ name: 'findRide', mode: 'search' }) },
-    { name: 'postReq', icon: 'megaphone', title: S.postRequest, sub: S.postRequestSub, on: () => go({ name: 'findRide', mode: 'request' }) },
-    { name: 'bookings', icon: 'ticket', title: S.myBookings, on: () => go({ name: 'myBookings' }) },
-    { name: 'saved', icon: 'repeat', title: S.saved, on: () => go({ name: 'saved' }) },
-    { name: 'women', icon: 'heart', title: S.womenOnly, warm: true, on: () => go({ name: 'womenOnly' }) },
-  ]
-
   return (
     <Screen>
       <div className="stack-lg reveal">
@@ -29,17 +21,45 @@ export default function RiderHome() {
           {first && <div className="muted">{S.hi(first)}</div>}
         </header>
 
-        {actions.map((a) => (
-          <button key={a.name} className={`act${a.hero ? ' act--hero' : ''}${a.warm ? ' act--warm' : ''}`} onClick={a.on}>
-            <span className="act__bubble"><Icon name={a.icon} size={a.hero ? 26 : 24} /></span>
-            <span className="act__body">
-              <div className="act__title">{a.title}</div>
-              {a.sub && <div className="act__sub">{a.sub}</div>}
-            </span>
-            <span className="act__go"><Icon name="chevronRight" size={20} /></span>
-          </button>
-        ))}
+        {/* 1. Primary Hero Action */}
+        <button className="act act--hero" onClick={() => go({ name: 'findRide', mode: 'search' })}>
+          <span className="act__bubble"><Icon name="search" size={26} /></span>
+          <span className="act__body">
+            <div className="act__title">{S.findRide}</div>
+            <div className="act__sub">{S.findRideSub}</div>
+          </span>
+          <span className="act__go"><Icon name="chevronRight" size={20} /></span>
+        </button>
 
+        {/* 2. Core Rider Tasks */}
+        <button className="act" onClick={() => go({ name: 'findRide', mode: 'request' })}>
+          <span className="act__bubble"><Icon name="megaphone" size={24} /></span>
+          <span className="act__body">
+            <div className="act__title">{S.postRequest}</div>
+            <div className="act__sub">{S.postRequestSub}</div>
+          </span>
+          <span className="act__go"><Icon name="chevronRight" size={20} /></span>
+        </button>
+
+        <button className="act" onClick={() => go({ name: 'myBookings' })}>
+          <span className="act__bubble"><Icon name="ticket" size={24} /></span>
+          <span className="act__body"><div className="act__title">{S.myBookings}</div></span>
+          <span className="act__go"><Icon name="chevronRight" size={20} /></span>
+        </button>
+
+        {/* 3. Quick Preferences & Commute Shortcuts Strip */}
+        <div className="pill-strip">
+          <button className="pill" onClick={() => go({ name: 'saved' })}>
+            <Icon name="repeat" size={15} />
+            <span>{S.saved}</span>
+          </button>
+          <button className="pill pill--sunset" onClick={() => go({ name: 'womenOnly' })}>
+            <Icon name="heart" size={15} />
+            <span>{S.womenOnly}</span>
+          </button>
+        </div>
+
+        {/* 4. Account & Tools */}
         <button className="act" onClick={() => go({ name: 'profile' })}>
           <span className="act__bubble"><Icon name="user" size={24} /></span>
           <span className="act__body"><div className="act__title">{S.profile}</div></span>
