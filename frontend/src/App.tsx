@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { api, ApiError } from './api'
 import type { Me } from './api'
 import { backButton, haptic, initTelegram, tg } from './telegram'
@@ -49,28 +49,29 @@ function TopControls({
     </div>
   )
 }
-import DriverHome from './screens/DriverHome'
-import RiderHome from './screens/RiderHome'
-import PostTrip from './screens/PostTrip'
-import MyTrips from './screens/MyTrips'
-import RequestsNear from './screens/RequestsNear'
-import FindRide from './screens/FindRide'
-import Results from './screens/Results'
-import TripCard from './screens/TripCard'
-import MyBookings from './screens/MyBookings'
-import WomenOnly from './screens/WomenOnly'
-import Saved from './screens/Saved'
-import Admin from './screens/Admin'
-import AddDriver from './screens/AddDriver'
-import Receipt from './screens/Receipt'
-import RidePreview from './screens/RidePreview'
-import Report from './screens/Report'
-import EditTrip from './screens/EditTrip'
-import Profile from './screens/Profile'
-import Support from './screens/Support'
-import Broadcast from './screens/Broadcast'
-import Consent from './screens/Consent'
-import Walkthrough from './screens/Walkthrough'
+
+const DriverHome = lazy(() => import('./screens/DriverHome'))
+const RiderHome = lazy(() => import('./screens/RiderHome'))
+const PostTrip = lazy(() => import('./screens/PostTrip'))
+const MyTrips = lazy(() => import('./screens/MyTrips'))
+const RequestsNear = lazy(() => import('./screens/RequestsNear'))
+const FindRide = lazy(() => import('./screens/FindRide'))
+const Results = lazy(() => import('./screens/Results'))
+const TripCard = lazy(() => import('./screens/TripCard'))
+const MyBookings = lazy(() => import('./screens/MyBookings'))
+const WomenOnly = lazy(() => import('./screens/WomenOnly'))
+const Saved = lazy(() => import('./screens/Saved'))
+const Admin = lazy(() => import('./screens/Admin'))
+const AddDriver = lazy(() => import('./screens/AddDriver'))
+const Receipt = lazy(() => import('./screens/Receipt'))
+const RidePreview = lazy(() => import('./screens/RidePreview'))
+const Report = lazy(() => import('./screens/Report'))
+const EditTrip = lazy(() => import('./screens/EditTrip'))
+const Profile = lazy(() => import('./screens/Profile'))
+const Support = lazy(() => import('./screens/Support'))
+const Broadcast = lazy(() => import('./screens/Broadcast'))
+const Consent = lazy(() => import('./screens/Consent'))
+const Walkthrough = lazy(() => import('./screens/Walkthrough'))
 
 function Placeholder({ title }: { title: string }) {
   return <ScreenWrap title={title}><div className="muted">በቅርቡ…</div></ScreenWrap>
@@ -241,7 +242,9 @@ export default function App() {
   if (me && !me.consented) {
     return (
       <div className="app">{fabs}
-        <Consent onAgree={async () => { await api.consent(); setMe({ ...me, consented: true }) }} />
+        <Suspense fallback={<Loader />}>
+          <Consent onAgree={async () => { await api.consent(); setMe({ ...me, consented: true }) }} />
+        </Suspense>
       </div>
     )
   }
@@ -250,10 +253,12 @@ export default function App() {
   if (me && !introSeen) {
     return (
       <div className="app">{fabs}
-        <Walkthrough role={me.role} onDone={() => {
-          try { localStorage.setItem(INTRO_KEY, '1') } catch { /* private mode */ }
-          setIntroSeen(true)
-        }} />
+        <Suspense fallback={<Loader />}>
+          <Walkthrough role={me.role} onDone={() => {
+            try { localStorage.setItem(INTRO_KEY, '1') } catch { /* private mode */ }
+            setIntroSeen(true)
+          }} />
+        </Suspense>
       </div>
     )
   }
@@ -287,7 +292,12 @@ export default function App() {
 
   return (
     <NavCtx.Provider value={nav}>
-      <div className="app">{fabs}{render(current)}</div>
+      <div className="app">
+        {fabs}
+        <Suspense fallback={<Loader />}>
+          {render(current)}
+        </Suspense>
+      </div>
     </NavCtx.Provider>
   )
 }

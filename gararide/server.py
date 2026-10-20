@@ -63,18 +63,27 @@ async def _lifespan(app):
             pass
 
 
+from starlette.middleware.gzip import GZipMiddleware
+
 app = create_app(conn, _bot_token, admin_ids=_admins, lifespan=_lifespan)
 # Production: hand out a fresh connection per request (see deps.get_conn).
 app.state.db_path = _db_path
 
+# Compress API responses and static assets > 1KB (crucial for 3G/4G in Addis)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 
 @app.middleware("http")
-async def _no_cache_html(request, call_next):
+async def _cache_headers(request, call_next):
     resp = await call_next(request)
-    if request.url.path in ("/", "/index.html"):
+    path = request.url.path
+    if path in ("/", "/index.html"):
         resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         resp.headers["Pragma"] = "no-cache"
         resp.headers["Expires"] = "0"
+    elif path.startswith("/assets/"):
+        # Vite hashed assets (js/css/images) are immutable: browser caches permanently
+        resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     return resp
 
 

@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS trips (
     created_at     TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_trips_depart ON trips(depart_at, status);
+CREATE INDEX IF NOT EXISTS idx_trips_driver ON trips(driver_id, status);
 
 -- The driver's declared drop-offs. This IS the route (UX spec section 12).
 CREATE TABLE IF NOT EXISTS trip_dropoffs (
@@ -96,6 +97,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     created_at    TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_bookings_trip ON bookings(trip_id, status);
+CREATE INDEX IF NOT EXISTS idx_bookings_rider ON bookings(rider_id, status);
 
 CREATE TABLE IF NOT EXISTS requests (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,6 +110,7 @@ CREATE TABLE IF NOT EXISTS requests (
                   CHECK (status IN ('open', 'filled', 'expired', 'cancelled')),
     created_at    TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_requests_rider ON requests(rider_id, status);
 
 -- The safety valve. Never shown to the blocked party (UX spec section 17).
 CREATE TABLE IF NOT EXISTS blocks (
@@ -162,6 +165,7 @@ CREATE TABLE IF NOT EXISTS saved_trips (
     active        INTEGER NOT NULL DEFAULT 1,
     created_at    TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_saved_trips_user ON saved_trips(user_id, active);
 
 -- A driver's usual commute, saved for one-tap re-posting (never auto-posts).
 CREATE TABLE IF NOT EXISTS driver_routes (
@@ -175,6 +179,7 @@ CREATE TABLE IF NOT EXISTS driver_routes (
     active        INTEGER NOT NULL DEFAULT 1,
     created_at    TEXT NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_driver_routes_driver ON driver_routes(driver_id, active);
 
 -- Every unmatched search is a driver-recruitment target (UX spec section 8).
 CREATE TABLE IF NOT EXISTS search_log (
@@ -239,3 +244,10 @@ def _migrate(conn: sqlite3.Connection) -> None:
     acols = {r[1] for r in conn.execute("PRAGMA table_info(allowlist)")}
     if "car_color" not in acols:
         conn.execute("ALTER TABLE allowlist ADD COLUMN car_color TEXT")
+
+    # Performance query indexes for frequently accessed foreign keys
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_trips_driver ON trips(driver_id, status)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_bookings_rider ON bookings(rider_id, status)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_requests_rider ON requests(rider_id, status)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_saved_trips_user ON saved_trips(user_id, active)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_driver_routes_driver ON driver_routes(driver_id, active)")
