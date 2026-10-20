@@ -29,6 +29,7 @@ export default function Broadcast() {
     } catch (e) {
       notify('error')
       if (e instanceof ApiError && e.status === 429) showAlert(S.rateLimited)
+      else showAlert(e instanceof ApiError ? (e.detail || S.errorGeneric) : S.errorGeneric)
     } finally { setBusy(false) }
   }
 
@@ -42,7 +43,7 @@ export default function Broadcast() {
                   onClick={() => { haptic(); setAudience(a.key) }}>{a.label}</button>
         ))}
       </div>
-      <textarea className="field" rows={5} style={{ marginTop: 12, resize: 'none' }}
+      <textarea className="field" rows={5} maxLength={500} style={{ marginTop: 12, resize: 'none' }}
                 placeholder={S.broadcastPlaceholder} value={msg}
                 onChange={(e) => setMsg(e.target.value)} />
       <div className="sticky-actions">

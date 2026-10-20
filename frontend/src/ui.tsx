@@ -57,11 +57,25 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []) {
   const [state, setState] = useState<AsyncState<T>>({ loading: true })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const load = useCallback((silent = false) => {
-    if (!silent) setState({ loading: true })
-    fn().then((data) => setState({ data, loading: false }))
-      .catch((e) => { if (!silent) setState({ loading: false, error: e?.message || S.errorGeneric }) })
+    let mounted = true
+    if (!silent) setState((s) => ({ ...s, loading: true }))
+    fn()
+      .then((data) => {
+        if (mounted) setState({ data, loading: false })
+      })
+      .catch((e) => {
+        if (mounted && !silent) {
+          setState({ loading: false, error: e?.detail || e?.message || S.errorGeneric })
+        }
+      })
+    return () => { mounted = false }
   }, deps)
-  useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    const cleanup = load()
+    return () => { cleanup?.() }
+  }, [load])
+
   // reload() shows the loader; refresh() updates in place (for background polling).
   const reload = useCallback(() => load(false), [load])
   const refresh = useCallback(() => load(true), [load])

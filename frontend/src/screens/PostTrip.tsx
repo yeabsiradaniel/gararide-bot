@@ -43,12 +43,18 @@ export default function PostTrip() {
   )
 
   async function pickDest(id: number) {
-    haptic()
-    setDestId(id)
-    const o = await api.dropoffOptions(id)
-    setOpts(o)
-    setSelected(new Set(o.intermediate.map((p) => p.id)))  // pre-tick common stops
-    setStep('drops')
+    if (busy) return
+    setBusy(true); haptic()
+    try {
+      setDestId(id)
+      const o = await api.dropoffOptions(id)
+      setOpts(o)
+      setSelected(new Set(o.intermediate.map((p) => p.id)))  // pre-tick common stops
+      setStep('drops')
+    } catch (e) {
+      notify('error')
+      showAlert(e instanceof ApiError ? (e.detail || S.errorGeneric) : S.errorGeneric)
+    } finally { setBusy(false) }
   }
 
   function toggle(id: number) {
@@ -63,16 +69,18 @@ export default function PostTrip() {
   function pickSlot(hhmm: string) { haptic(); setDepartAt(tomorrowAt(hhmm)) }  // select only
 
   async function submit(n: number) {
+    if (busy) return
     setSeats(n); setBusy(true)
     try {
       const t = await api.postTrip({
         dest_place_id: destId!, dropoff_place_ids: [...selected],
-        depart_at: departAt!, seats: n, note: note || null,
+        depart_at: departAt!, seats: n, note: note.trim() || null,
       })
       notify('success'); setPosted(t); setStep('done')
     } catch (e) {
       notify('error')
       if (e instanceof ApiError && e.detail) showAlert(postErrorMsg(e.detail))
+      else showAlert(S.errorGeneric)
     } finally { setBusy(false) }
   }
 
@@ -160,7 +168,7 @@ export default function PostTrip() {
         </div>
         <label className="stack">
           <div className="tiny muted">{S.noteLabel}</div>
-          <input className="field" placeholder={S.notePlaceholder}
+          <input className="field" placeholder={S.notePlaceholder} maxLength={120}
                  value={note} onChange={(e) => setNote(e.target.value)} />
         </label>
       </Screen>
@@ -168,6 +176,7 @@ export default function PostTrip() {
   }
 
   async function saveRoute() {
+    if (busy) return
     setBusy(true)
     try {
       await api.saveRoute({
@@ -175,6 +184,9 @@ export default function PostTrip() {
         depart_time: departAt!.slice(11, 16), seats: seats!, days_mask: daysMask,
       })
       notify('success'); setRouteState('saved')
+    } catch (e) {
+      notify('error')
+      showAlert(e instanceof ApiError ? (e.detail || S.errorGeneric) : S.errorGeneric)
     } finally { setBusy(false) }
   }
 

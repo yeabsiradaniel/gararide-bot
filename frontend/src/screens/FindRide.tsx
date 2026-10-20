@@ -6,7 +6,7 @@ import { S, loc } from '../strings'
 import { Loader, Screen, useAsync } from '../ui'
 import { Icon } from '../icons'
 import { WHENS, windowFor } from '../util'
-import { haptic, notify } from '../telegram'
+import { haptic, notify, showAlert } from '../telegram'
 
 export default function FindRide({ mode }: { mode: 'search' | 'request' }) {
   // Computed per render so it follows the live language, not import-time.
@@ -41,6 +41,7 @@ export default function FindRide({ mode }: { mode: 'search' | 'request' }) {
   }
 
   async function pickWhen(when: string) {
+    if (busy) return
     haptic()
     if (mode === 'search') {
       nav.go({ name: 'results', destId: dest!.id, destNameAm: dest!.name_am, destNameEn: dest!.name_en, when })
@@ -52,6 +53,9 @@ export default function FindRide({ mode }: { mode: 'search' | 'request' }) {
       await api.postRequest(dest!.id, ws, we)
       notify('success')
       nav.reset({ name: 'riderHome' })
+    } catch (e: any) {
+      notify('error')
+      showAlert(e?.detail || S.errorGeneric)
     } finally { setBusy(false) }
   }
 

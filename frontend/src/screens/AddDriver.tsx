@@ -22,13 +22,16 @@ export default function AddDriver({ edit }: { edit?: RosterDriver }) {
   const [err, setErr] = useState<string>()
   const [done, setDone] = useState<string>()
 
-  const ready = phone.trim() && name.trim() && tower.trim() && seats
+  const cleanPhone = phone.trim().replace(/[\s-]/g, '')
+  const phoneValid = /^(?:\+251|0)?[97]\d{8}$/.test(cleanPhone)
+  const phoneErr = phone.trim() && !phoneValid ? S.invalidPhone : undefined
+  const ready = phoneValid && name.trim() && tower.trim() && seats
 
   async function submit() {
     if (!ready || busy) return
     setBusy(true); setErr(undefined)
     const body = {
-      phone: phone.trim(), full_name: name.trim(), tower: tower.trim(),
+      phone: cleanPhone, full_name: name.trim(), tower: tower.trim(),
       car_model: car.trim() || null, car_color: color.trim() || null,
       plate: plate.trim() || null, car_seats: seats!, is_female: female,
     }
@@ -74,33 +77,34 @@ export default function AddDriver({ edit }: { edit?: RosterDriver }) {
       <div className="stack">
         <label className="stack">
           <div className="tiny muted">{S.fldPhone}</div>
-          <input className="field" type="tel" inputMode="tel" placeholder="09…"
+          <input className="field" type="tel" inputMode="tel" placeholder="09…" maxLength={15}
                  value={phone} disabled={isEdit} readOnly={isEdit}
                  style={isEdit ? { opacity: 0.6 } : undefined}
                  onChange={(e) => setPhone(e.target.value)} />
+          {phoneErr && <div className="tiny" style={{ color: 'var(--danger)' }}>{phoneErr}</div>}
         </label>
         <label className="stack">
           <div className="tiny muted">{S.fldName}</div>
-          <input className="field" value={name} onChange={(e) => setName(e.target.value)} />
+          <input className="field" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         <label className="stack">
           <div className="tiny muted">{S.fldTower}</div>
-          <input className="field" placeholder="B4" value={tower}
+          <input className="field" placeholder="B4" maxLength={10} value={tower}
                  onChange={(e) => setTower(e.target.value)} />
         </label>
         <label className="stack">
           <div className="tiny muted">{S.fldCar}</div>
-          <input className="field" placeholder="Toyota Corolla" value={car}
+          <input className="field" placeholder="Toyota Corolla" maxLength={40} value={car}
                  onChange={(e) => setCar(e.target.value)} />
         </label>
         <label className="stack">
           <div className="tiny muted">{S.fldColor}</div>
-          <input className="field" placeholder="White" value={color}
+          <input className="field" placeholder="White" maxLength={25} value={color}
                  onChange={(e) => setColor(e.target.value)} />
         </label>
         <label className="stack">
           <div className="tiny muted">{S.fldPlate}</div>
-          <input className="field" placeholder="3-AA 21457" value={plate}
+          <input className="field" placeholder="3-AA 21457" maxLength={20} value={plate}
                  onChange={(e) => setPlate(e.target.value)} />
         </label>
         <div className="stack">

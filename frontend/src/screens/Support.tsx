@@ -16,14 +16,18 @@ export default function Support() {
     if (!msg.trim() || busy) return
     setBusy(true); haptic()
     try { await api.support(msg.trim()); notify('success'); await showAlert(S.supportSent); nav.back() }
-    catch (e) { notify('error'); if (e instanceof ApiError && e.status === 429) showAlert(S.rateLimited) }
+    catch (e) {
+      notify('error')
+      if (e instanceof ApiError && e.status === 429) showAlert(S.rateLimited)
+      else showAlert(e instanceof ApiError ? (e.detail || S.errorGeneric) : S.errorGeneric)
+    }
     finally { setBusy(false) }
   }
 
   return (
     <Screen eyebrow={S.appName} title={S.supportTitle}>
       <div className="card muted" style={{ fontSize: 14 }}>{S.supportHint}</div>
-      <textarea className="field" rows={5} style={{ marginTop: 12, resize: 'none' }}
+      <textarea className="field" rows={5} maxLength={500} style={{ marginTop: 12, resize: 'none' }}
                 placeholder={S.supportPlaceholder} value={msg}
                 onChange={(e) => setMsg(e.target.value)} />
       <div className="sticky-actions">

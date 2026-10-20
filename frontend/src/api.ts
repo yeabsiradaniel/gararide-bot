@@ -1,5 +1,6 @@
 // Typed API client. Sends Authorization: tma <initData> on every request.
 import { initData } from './telegram'
+import { S } from './strings'
 
 const BASE = (import.meta.env.VITE_API_BASE as string) ?? ''
 
@@ -10,18 +11,40 @@ export class ApiError extends Error {
 }
 
 async function req<T>(path: string, opts: RequestInit = {}): Promise<T> {
-  const res = await fetch(BASE + path, {
-    ...opts,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: 'tma ' + initData(),
-      ...(opts.headers || {}),
-    },
-  })
-  if (res.status === 204) return null as T
-  const body = await res.json().catch(() => null)
-  if (!res.ok) throw new ApiError(res.status, body?.detail)
-  return body as T
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 15000)
+
+  try {
+    const res = await fetch(BASE + path, {
+      ...opts,
+      signal: opts.signal || controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'tma ' + initData(),
+        ...(opts.headers || {}),
+      },
+    })
+    clearTimeout(timeoutId)
+    if (res.status === 204) return null as T
+    const body = await res.json().catch(() => null)
+    if (!res.ok) {
+      let detailMsg: string | undefined
+      if (typeof body?.detail === 'string') {
+        detailMsg = body.detail
+      } else if (Array.isArray(body?.detail)) {
+        detailMsg = body.detail.map((d: any) => d?.msg || String(d)).join(', ')
+      }
+      throw new ApiError(res.status, detailMsg)
+    }
+    return body as T
+  } catch (err: any) {
+    clearTimeout(timeoutId)
+    if (err instanceof ApiError) throw err
+    if (err?.name === 'AbortError') {
+      throw new ApiError(408, S.errorNetwork || 'Request timed out. Please check your connection.')
+    }
+    throw new ApiError(0, S.errorNetwork || 'Network connection failed. Please check your internet.')
+  }
 }
 
 const post = <T>(path: string, data?: unknown) =>

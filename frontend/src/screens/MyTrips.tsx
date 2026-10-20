@@ -27,16 +27,46 @@ export default function MyTrips() {
   usePoll(trips.refresh)   // live passenger count / seats as riders book or cancel
   const [picking, setPicking] = useState<number | null>(null)  // trip_id choosing an ETA
 
+  const [busy, setBusy] = useState(false)
+
   if (trips.loading) return <Loader />
   if (trips.error) return <ErrorView msg={trips.error} onRetry={trips.reload} />
   if (!trips.data?.length) return <Screen eyebrow={S.myTrips}><EmptyState icon="calendar" text={S.noneYet} /></Screen>
 
-  async function paid(id: number) { haptic(); await api.markPaid(id); notify('success'); trips.reload() }
-  async function noShow(id: number) { haptic(); await api.markNoShow(id); trips.reload() }
-  async function cancel(id: number) { haptic(); await api.cancelTrip(id); trips.reload() }
-  async function arrived(id: number) { haptic(); await api.markArrived(id); notify('success'); trips.reload() }
+  async function paid(id: number) {
+    if (busy) return
+    setBusy(true); haptic()
+    try { await api.markPaid(id); notify('success'); trips.reload() }
+    catch (e: any) { notify('error'); showAlert(e?.detail || S.errorGeneric) }
+    finally { setBusy(false) }
+  }
+  async function noShow(id: number) {
+    if (busy) return
+    setBusy(true); haptic()
+    try { await api.markNoShow(id); trips.reload() }
+    catch (e: any) { notify('error'); showAlert(e?.detail || S.errorGeneric) }
+    finally { setBusy(false) }
+  }
+  async function cancel(id: number) {
+    if (busy) return
+    setBusy(true); haptic()
+    try { await api.cancelTrip(id); trips.reload() }
+    catch (e: any) { notify('error'); showAlert(e?.detail || S.errorGeneric) }
+    finally { setBusy(false) }
+  }
+  async function arrived(id: number) {
+    if (busy) return
+    setBusy(true); haptic()
+    try { await api.markArrived(id); notify('success'); trips.reload() }
+    catch (e: any) { notify('error'); showAlert(e?.detail || S.errorGeneric) }
+    finally { setBusy(false) }
+  }
   async function onWay(id: number, eta: number) {
-    haptic(); await api.onMyWay(id, eta); notify('success'); setPicking(null); trips.reload()
+    if (busy) return
+    setBusy(true); haptic()
+    try { await api.onMyWay(id, eta); notify('success'); setPicking(null); trips.reload() }
+    catch (e: any) { notify('error'); showAlert(e?.detail || S.errorGeneric) }
+    finally { setBusy(false) }
   }
 
   return (

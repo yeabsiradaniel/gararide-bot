@@ -14,14 +14,28 @@ export default function TripCard({ card, onGone }: { card: Card; onGone?: () => 
   const [busy, setBusy] = useState(false)
 
   async function cancel() {
+    if (busy) return
     setBusy(true); haptic()
-    try { await api.cancelBooking(card.booking_id); notify('warning'); done() }
-    finally { setBusy(false) }
+    try {
+      await api.cancelBooking(card.booking_id)
+      notify('warning')
+      done()
+    } catch (e: any) {
+      notify('error')
+      showAlert(e?.detail || S.errorGeneric)
+    } finally { setBusy(false) }
   }
   async function block() {
+    if (busy) return
     setBusy(true); haptic()
-    try { await api.block(card.trip_id); await api.cancelBooking(card.booking_id); done() }
-    finally { setBusy(false) }
+    try {
+      await api.block(card.trip_id)
+      await api.cancelBooking(card.booking_id)
+      done()
+    } catch (e: any) {
+      notify('error')
+      showAlert(e?.detail || S.errorGeneric)
+    } finally { setBusy(false) }
   }
   function done() { onGone ? onGone() : nav.reset({ name: 'riderHome' }) }
 

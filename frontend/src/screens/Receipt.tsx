@@ -31,10 +31,19 @@ export default function Receipt({ ride }: { ride: HistoryRide }) {
 
   const [reported, setReported] = useState(false)
   async function flagNoShow() {
+    if (reported || busy) return
     if (!(await confirmDialog(S.driverNoShowConfirm))) return
-    haptic()
-    try { await api.driverNoShow(ride.booking_id); setReported(true); notify('success'); showAlert(S.driverNoShowSent) }
-    catch (e) { notify('error'); if (e instanceof ApiError && e.status === 429) showAlert(S.rateLimited) }
+    setBusy(true); haptic()
+    try {
+      await api.driverNoShow(ride.booking_id)
+      setReported(true)
+      notify('success')
+      showAlert(S.driverNoShowSent)
+    } catch (e: any) {
+      notify('error')
+      if (e instanceof ApiError && e.status === 429) showAlert(S.rateLimited)
+      else showAlert(e instanceof ApiError ? (e.detail || S.errorGeneric) : S.errorGeneric)
+    } finally { setBusy(false) }
   }
 
   return (

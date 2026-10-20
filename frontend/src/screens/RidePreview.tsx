@@ -37,6 +37,9 @@ export default function RidePreview({ p }: { p: Extract<Scr, { name: 'ridePrevie
           }
           nav.back()
         }
+      } else {
+        notify('error')
+        await showAlert(e instanceof ApiError ? (e.detail || S.errorGeneric) : S.errorGeneric)
       }
     } finally { setBusy(false) }
   }

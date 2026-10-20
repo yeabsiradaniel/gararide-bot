@@ -25,6 +25,7 @@ export default function Report({ trip_id, driverName }: { trip_id: number; drive
     } catch (e) {
       notify('error')
       if (e instanceof ApiError && e.status === 429) showAlert(S.rateLimited)
+      else showAlert(e instanceof ApiError ? (e.detail || S.errorGeneric) : S.errorGeneric)
     } finally { setBusy(false) }
   }
 
@@ -50,7 +51,7 @@ export default function Report({ trip_id, driverName }: { trip_id: number; drive
         })}
       </div>
 
-      <textarea className="field" rows={3} style={{ marginTop: 12, resize: 'none' }}
+      <textarea className="field" rows={3} maxLength={300} style={{ marginTop: 12, resize: 'none' }}
                 placeholder={S.reportNotePlaceholder}
                 value={note} onChange={(e) => setNote(e.target.value)} />
 

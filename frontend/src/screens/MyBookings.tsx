@@ -37,8 +37,8 @@ export default function MyBookings() {
                       return (
                         <div key={c.booking_id} className="card" style={{ opacity: 0.65 }}>
                           <div className="spread">
-                            <div>
-                              <div style={{ fontWeight: 700, textDecoration: 'line-through' }}>{c.driver_name} · → {loc(c.dest_name_am, c.dest_name_en)}</div>
+                            <div style={{ minWidth: 0 }}>
+                              <div className="break-words" style={{ fontWeight: 700, textDecoration: 'line-through' }}>{c.driver_name} · → {loc(c.dest_name_am, c.dest_name_en)}</div>
                               <div className="clock2">{fmtWhen(c.depart_at)}</div>
                             </div>
                             <span className="pill pill--sunset">{S.cancelledBadge}</span>
@@ -51,8 +51,8 @@ export default function MyBookings() {
                       <button key={c.booking_id} className="card" style={{ textAlign: 'start', cursor: 'pointer', width: '100%' }}
                               onClick={() => { haptic(); nav.go({ name: 'tripCard', card: c }) }}>
                         <div className="spread">
-                          <div>
-                            <div style={{ fontWeight: 700 }}>{c.driver_name} · → {loc(c.dest_name_am, c.dest_name_en)}</div>
+                          <div style={{ minWidth: 0 }}>
+                            <div className="break-words" style={{ fontWeight: 700 }}>{c.driver_name} · → {loc(c.dest_name_am, c.dest_name_en)}</div>
                             <div className="clock2">{fmtWhen(c.depart_at)}</div>
                           </div>
                           {boarding

@@ -4,7 +4,7 @@ import { useNav } from '../nav'
 import { S } from '../strings'
 import { Screen } from '../ui'
 import { Icon } from '../icons'
-import { haptic, notify } from '../telegram'
+import { haptic, notify, showAlert } from '../telegram'
 
 export default function WomenOnly() {
   const nav = useNav()
@@ -20,9 +20,16 @@ export default function WomenOnly() {
   )
 
   async function save() {
+    if (busy) return
     setBusy(true); haptic()
-    try { await api.setWomenOnly(wo, wp); notify('success'); nav.back() }
-    finally { setBusy(false) }
+    try {
+      await api.setWomenOnly(wo, wp)
+      notify('success')
+      nav.back()
+    } catch (e: any) {
+      notify('error')
+      showAlert(e?.detail || S.errorGeneric)
+    } finally { setBusy(false) }
   }
 
   return (

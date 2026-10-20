@@ -32,6 +32,7 @@ export default function EditTrip({ trip }: { trip: MyTrip }) {
     } catch (e) {
       notify('error')
       if (e instanceof ApiError && e.detail) showAlert(postErrorMsg(e.detail))
+      else showAlert(S.errorGeneric)
     } finally { setBusy(false) }
   }
 
@@ -56,7 +57,7 @@ export default function EditTrip({ trip }: { trip: MyTrip }) {
 
       <label className="stack" style={{ marginTop: 14 }}>
         <div className="tiny muted">{S.noteLabel}</div>
-        <input className="field" placeholder={S.notePlaceholder}
+        <input className="field" placeholder={S.notePlaceholder} maxLength={120}
                value={note} onChange={(e) => setNote(e.target.value)} />
       </label>
 

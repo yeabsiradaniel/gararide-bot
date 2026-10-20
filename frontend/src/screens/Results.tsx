@@ -22,10 +22,17 @@ export default function Results({ screen }: { screen: Extract<Scr, { name: 'resu
   const data = res.data!
 
   async function postRequest() {
+    if (busy) return
     setBusy(true); haptic()
     const [ws, we] = windowFor(when)
-    try { await api.postRequest(destId, ws, we); notify('success'); nav.reset({ name: 'riderHome' }) }
-    finally { setBusy(false) }
+    try {
+      await api.postRequest(destId, ws, we)
+      notify('success')
+      nav.reset({ name: 'riderHome' })
+    } catch (e: any) {
+      notify('error')
+      showAlert(e?.detail || S.errorGeneric)
+    } finally { setBusy(false) }
   }
 
   if (data.matches.length) {

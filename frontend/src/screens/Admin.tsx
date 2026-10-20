@@ -26,20 +26,26 @@ export default function Admin() {
   ]
 
   async function remove(d: RosterDriver) {
+    if (busy) return
     if (!(await confirmDialog(S.removeDriverConfirm(d.full_name)))) return
-    setBusy(d.phone)
+    setBusy(d.phone); haptic()
     try {
       await api.removeDriver(d.phone)
       notify('success'); drivers.reload(); ops.reload()
-    } catch {
+    } catch (e: any) {
       notify('error')
+      showAlert(e?.detail || S.errorGeneric)
     } finally { setBusy(undefined) }
   }
 
   async function resolveReport(id: number) {
-    setResolving(id)
+    if (resolving) return
+    setResolving(id); haptic()
     try { await api.resolveReport(id); notify('success'); reports.reload() }
-    catch { notify('error') }
+    catch (e: any) {
+      notify('error')
+      showAlert(e?.detail || S.errorGeneric)
+    }
     finally { setResolving(undefined) }
   }
 
