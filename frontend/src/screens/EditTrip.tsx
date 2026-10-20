@@ -60,7 +60,7 @@ export default function EditTrip({ trip }: { trip: MyTrip }) {
                value={note} onChange={(e) => setNote(e.target.value)} />
       </label>
 
-      {reason && <div className="card" style={{ color: 'var(--sunset)' }}>{postErrorMsg(reason)}</div>}
+      {reason && <div className="card" style={{ color: 'var(--sunset-text)' }}>{postErrorMsg(reason)}</div>}
       <div className="sticky-actions">
         <button className="btn btn--grad" disabled={busy || !!reason} onClick={save}>
           <Icon name="check" size={18} /> {S.saveChanges}

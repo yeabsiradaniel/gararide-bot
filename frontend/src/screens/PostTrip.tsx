@@ -140,7 +140,7 @@ export default function PostTrip() {
                    onChange={(e) => setDepartAt(e.target.value ? e.target.value + ':00' : undefined)} />
           </label>
         </div>
-        {reason && <div className="card" style={{ color: 'var(--sunset)' }}>{postErrorMsg(reason)}</div>}
+        {reason && <div className="card" style={{ color: 'var(--sunset-text)' }}>{postErrorMsg(reason)}</div>}
         <div className="sticky-actions">
           <button className="btn" disabled={!departAt || !!reason}
                   onClick={() => { haptic(); setStep('seats') }}>{S.continue_} <Icon name="chevronRight" size={20} /></button>
@@ -193,7 +193,7 @@ export default function PostTrip() {
         </div>
 
         {routeState === 'saved'
-          ? <div className="card" style={{ color: 'var(--green)' }}>{S.routeSaved}</div>
+          ? <div className="card" style={{ color: 'var(--green-text)' }}>{S.routeSaved}</div>
           : routeState === 'idle'
             ? <button className="btn btn--ghost" onClick={() => { haptic(); setRouteState('picking') }}>{S.saveRoute}</button>
             : (

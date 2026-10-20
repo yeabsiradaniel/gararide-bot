@@ -46,7 +46,7 @@ export default function Results({ screen }: { screen: Extract<Scr, { name: 'resu
                   <div className="clock2" style={{ marginTop: 3 }}>
                     {fmtWhen(m.depart_at)}{m.driver_tower ? ` · ${S.towerWord} ${m.driver_tower}` : ''}
                   </div>
-                  <div className="tiny" style={{ marginTop: 2, color: 'var(--green)' }}>{m.seats_left} {S.seatsWord}</div>
+                  <div className="tiny" style={{ marginTop: 2, color: 'var(--green-text)' }}>{m.seats_left} {S.seatsWord}</div>
                 </div>
                 <div style={{ textAlign: 'end', flexShrink: 0 }}>
                   <div className="price" style={{ fontSize: 19 }}>{fmtMoney(m.fare)}</div>
@@ -77,7 +77,7 @@ export default function Results({ screen }: { screen: Extract<Scr, { name: 'resu
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700 }}>{m.driver_name}</div>
                     <div className="clock2 row" style={{ gap: 6, marginTop: 3 }}>
-                      <Icon name="pin" size={14} style={{ color: 'var(--green)' }} /> {loc(m.dest_name_am, m.dest_name_en)} · {fmtWhen(m.depart_at)}
+                      <Icon name="pin" size={14} style={{ color: 'var(--green-text)' }} /> {loc(m.dest_name_am, m.dest_name_en)} · {fmtWhen(m.depart_at)}
                     </div>
                   </div>
                   <div style={{ textAlign: 'end', flexShrink: 0 }}>
@@ -91,7 +91,7 @@ export default function Results({ screen }: { screen: Extract<Scr, { name: 'resu
         </>
       )}
       {data.demand_count > 0 && (
-        <div className="card row" style={{ background: 'var(--surface)', border: 'none', gap: 10, color: 'var(--green)' }}>
+        <div className="card card--surface row" style={{ gap: 10, color: 'var(--green-text)' }}>
           <Icon name="users" size={20} /> <span style={{ color: 'var(--ink)' }}>{S.demandLine(data.demand_count)}</span>
         </div>
       )}

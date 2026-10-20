@@ -41,7 +41,7 @@ export default function MyBookings() {
                               <div style={{ fontWeight: 700, textDecoration: 'line-through' }}>{c.driver_name} · → {loc(c.dest_name_am, c.dest_name_en)}</div>
                               <div className="clock2">{fmtWhen(c.depart_at)}</div>
                             </div>
-                            <span className="pill" style={{ background: 'var(--sunset)', color: '#fff', border: 'none' }}>{S.cancelledBadge}</span>
+                            <span className="pill pill--sunset">{S.cancelledBadge}</span>
                           </div>
                         </div>
                       )
@@ -82,8 +82,7 @@ export default function MyBookings() {
                         </div>
                         <div style={{ textAlign: 'end', flexShrink: 0 }}>
                           <div className="price">{fmtMoney(h.fare)}</div>
-                          <span className="badge" style={statusWarm(h.status)
-                            ? { background: '#FFE9DE', color: 'var(--sunset)' } : undefined}>{statusLabel(h.status)}</span>
+                          <span className={`badge ${statusWarm(h.status) ? 'badge--sunset' : ''}`}>{statusLabel(h.status)}</span>
                         </div>
                       </div>
                     </button>

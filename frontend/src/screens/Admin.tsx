@@ -62,7 +62,7 @@ export default function Admin() {
               <div key={r.id} className="card stack" style={{ gap: 8, borderColor: 'var(--sunset)' }}>
                 <div className="spread">
                   <span><b>{r.reported_name}</b>{r.reported_tower ? ` · ${r.reported_tower}` : ''}</span>
-                  <span className="pill" style={{ background: 'var(--sunset)', color: '#fff', border: 'none' }}>{reasonLabel(r.reason)}</span>
+                  <span className="pill pill--sunset">{reasonLabel(r.reason)}</span>
                 </div>
                 {r.note && <div className="muted tiny">“{r.note}”</div>}
                 <div className="spread">
@@ -108,15 +108,13 @@ export default function Admin() {
                   </span>
                   {d.ratings && (d.ratings.up > 0 || d.ratings.down > 0) && (
                     <span className="row tiny" style={{ gap: 10, marginTop: 2 }}>
-                      <span className="row" style={{ gap: 3, color: 'var(--green)' }}><Icon name="thumbsUp" size={13} /> {d.ratings.up}</span>
+                      <span className="row" style={{ gap: 3, color: 'var(--green-text)' }}><Icon name="thumbsUp" size={13} /> {d.ratings.up}</span>
                       <span className="row" style={{ gap: 3, color: 'var(--sunset)' }}><Icon name="thumbsDown" size={13} /> {d.ratings.down}</span>
                     </span>
                   )}
                 </div>
                 <div className="row" style={{ gap: 8, flexShrink: 0 }}>
-                  <span className="pill" style={d.onboarded
-                    ? { background: 'var(--green)', color: '#fff', border: 'none' }
-                    : undefined}>{d.onboarded ? S.onboarded : S.pending}</span>
+                  <span className={`pill ${d.onboarded ? 'pill--on' : ''}`}>{d.onboarded ? S.onboarded : S.pending}</span>
                   <button className="icon-btn" aria-label="edit"
                           onClick={() => { haptic(); nav.go({ name: 'addDriver', edit: d }) }}><Icon name="edit" size={15} /></button>
                   <button className="icon-btn" aria-label="remove" disabled={busy === d.phone}
@@ -135,7 +133,7 @@ export default function Admin() {
             {unmatched.data.map((u) => (
               <div key={u.dest_name} className="spread card" style={{ padding: '12px 16px' }}>
                 <span>{u.dest_name}</span>
-                <span className="pill" style={{ background: 'var(--sunset)', color: '#fff', border: 'none' }}>{u.riders} {S.waitingWord}</span>
+                <span className="pill pill--sunset">{u.riders} {S.waitingWord}</span>
               </div>
             ))}
           </div>

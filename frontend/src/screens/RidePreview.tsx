@@ -60,10 +60,10 @@ export default function RidePreview({ p }: { p: Extract<Scr, { name: 'ridePrevie
         </div>
 
         <div className="spread">
-          <span className="row" style={{ gap: 8 }}><Icon name="pin" size={18} style={{ color: 'var(--green)' }} /> {loc(p.dest_name_am, p.dest_name_en)}</span>
+          <span className="row" style={{ gap: 8 }}><Icon name="pin" size={18} style={{ color: 'var(--green-text)' }} /> {loc(p.dest_name_am, p.dest_name_en)}</span>
           <span className="price price--xl" style={{ fontSize: 26 }}>{fmtMoney(p.fare)}</span>
         </div>
-        {typeof p.seats_left === 'number' && <div className="tiny" style={{ color: 'var(--green)' }}>{p.seats_left} {S.seatsWord}</div>}
+        {typeof p.seats_left === 'number' && <div className="tiny" style={{ color: 'var(--green-text)' }}>{p.seats_left} {S.seatsWord}</div>}
       </div>
 
       <div className="sticky-actions">

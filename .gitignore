@@ -4,7 +4,7 @@ __pycache__/
 *.egg-info/
 .eggs/
 build/
-dist/
+/dist/
 
 # Virtual environments
 .venv/
@@ -40,10 +40,10 @@ seed/allowlist_test.csv
 
 # Node / frontend build
 node_modules/
-frontend/dist/
 *.local
 
 # Local scratch logs from running the server/tunnel
 *.log
 
 cloudflared.exe
+.agent/

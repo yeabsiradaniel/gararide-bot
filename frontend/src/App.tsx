@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, ApiError } from './api'
 import type { Me } from './api'
-import { backButton, haptic, initTelegram } from './telegram'
+import { backButton, haptic, initTelegram, tg } from './telegram'
 import { NavCtx } from './nav'
 import type { Nav, Screen } from './nav'
 import { ErrorView, Loader, Screen as ScreenWrap } from './ui'
@@ -11,13 +11,43 @@ import { Icon } from './icons'
 
 const LANG_KEY = 'gararide_lang'
 const INTRO_KEY = 'gararide_intro_seen'
+const THEME_KEY = 'gararide_theme'
 
-function LangFab({ lang, onToggle }: { lang: Lang; onToggle: () => void }) {
-  // Shows the language you'd switch TO.
+type Theme = 'light' | 'dark'
+
+function TopControls({
+  lang,
+  onToggleLang,
+  theme,
+  onToggleTheme,
+}: {
+  lang: Lang
+  onToggleLang: () => void
+  theme: Theme
+  onToggleTheme: () => void
+}) {
   return (
-    <button className="lang-fab" onClick={onToggle} aria-label="Change language">
-      <Icon name="globe" size={15} /> {lang === 'am' ? 'EN' : 'አማ'}
-    </button>
+    <div className="top-fabs">
+      <button
+        className="top-fab"
+        onClick={onToggleTheme}
+        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={16} />
+        <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+      </button>
+
+      <button
+        className="top-fab"
+        onClick={onToggleLang}
+        aria-label={lang === 'am' ? 'Switch to English' : 'Switch to Amharic'}
+        title={lang === 'am' ? 'Switch to English' : 'Switch to Amharic'}
+      >
+        <Icon name={lang === 'am' ? 'flagUS' : 'flagET'} size={17} />
+        <span>{lang === 'am' ? 'EN' : 'አማ'}</span>
+      </button>
+    </div>
   )
 }
 import DriverHome from './screens/DriverHome'
@@ -63,13 +93,79 @@ export default function App() {
   const [introSeen, setIntroSeen] = useState(() => {
     try { return localStorage.getItem(INTRO_KEY) === '1' } catch { return false }
   })
+  const [theme, setThemeState] = useState<Theme>(() => {
+    try {
+      const saved = localStorage.getItem(THEME_KEY) as Theme
+      if (saved === 'light' || saved === 'dark') {
+        document.documentElement.dataset.theme = saved
+        if (document.body) document.body.dataset.theme = saved
+        return saved
+      }
+    } catch {}
+    const isDark =
+      tg?.colorScheme === 'dark' ||
+      document.documentElement.dataset.theme === 'dark' ||
+      (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
+    const initial = isDark ? 'dark' : 'light'
+    document.documentElement.dataset.theme = initial
+    if (document.body) document.body.dataset.theme = initial
+    return initial
+  })
+
+  const applyTheme = useCallback((next: Theme) => {
+    document.documentElement.dataset.theme = next
+    if (document.body) document.body.dataset.theme = next
+    try { localStorage.setItem(THEME_KEY, next) } catch {}
+    setThemeState(next)
+    try {
+      if (next === 'dark') {
+        tg?.setHeaderColor?.('#081B09')
+        tg?.setBackgroundColor?.('#081B09')
+      } else {
+        tg?.setHeaderColor?.('#0DA200')
+        tg?.setBackgroundColor?.('#FBFEF9')
+      }
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    try {
+      if (theme === 'dark') {
+        tg?.setHeaderColor?.('#081B09')
+        tg?.setBackgroundColor?.('#081B09')
+      } else {
+        tg?.setHeaderColor?.('#0DA200')
+        tg?.setBackgroundColor?.('#FBFEF9')
+      }
+    } catch {}
+
+    const onTgThemeChanged = () => {
+      try {
+        const saved = localStorage.getItem(THEME_KEY)
+        if (!saved && tg?.colorScheme) {
+          applyTheme(tg.colorScheme)
+        }
+      } catch {}
+    }
+    try {
+      tg?.onEvent?.('themeChanged', onTgThemeChanged)
+    } catch {}
+  }, [theme, applyTheme])
+
+  const toggleTheme = useCallback(() => {
+    haptic()
+    applyTheme(theme === 'dark' ? 'light' : 'dark')
+  }, [theme, applyTheme])
+
   const [lang, setLangState] = useState<Lang>(() => {
     const saved = (localStorage.getItem(LANG_KEY) as Lang) || 'am'
+    document.documentElement.lang = saved
     setActiveLang(saved)  // apply before first paint
     return saved
   })
 
   const applyLang = useCallback((next: Lang, persist: boolean) => {
+    document.documentElement.lang = next
     setActiveLang(next)
     localStorage.setItem(LANG_KEY, next)
     setLangState(next)
@@ -129,16 +225,23 @@ export default function App() {
     else backButton.hide()
   }, [canBack])
 
-  const fab = <LangFab lang={lang} onToggle={toggleLang} />
+  const fabs = (
+    <TopControls
+      lang={lang}
+      onToggleLang={toggleLang}
+      theme={theme}
+      onToggleTheme={toggleTheme}
+    />
+  )
 
-  if (phase === 'loading') return <div className="app">{fab}<Loader /></div>
-  if (phase === 'error') return <div className="app">{fab}<ErrorView msg={err} onRetry={boot} /></div>
-  if (phase === 'register') return <div className="app">{fab}<Register /></div>
+  if (phase === 'loading') return <div className="app">{fabs}<Loader /></div>
+  if (phase === 'error') return <div className="app">{fabs}<ErrorView msg={err} onRetry={boot} /></div>
+  if (phase === 'register') return <div className="app">{fabs}<Register /></div>
 
   // One-time consent gate before anything else.
   if (me && !me.consented) {
     return (
-      <div className="app">{fab}
+      <div className="app">{fabs}
         <Consent onAgree={async () => { await api.consent(); setMe({ ...me, consented: true }) }} />
       </div>
     )
@@ -147,7 +250,7 @@ export default function App() {
   // First-open "how it works", once per device (after consent).
   if (me && !introSeen) {
     return (
-      <div className="app">{fab}
+      <div className="app">{fabs}
         <Walkthrough role={me.role} onDone={() => {
           try { localStorage.setItem(INTRO_KEY, '1') } catch { /* private mode */ }
           setIntroSeen(true)
@@ -179,13 +282,13 @@ export default function App() {
       case 'profile': return <Profile />
       case 'support': return <Support />
       case 'broadcast': return <Broadcast />
-      default: return <Placeholder title={s.name} />
+      default: return <Placeholder title={(s as { name?: string })?.name || 'Screen'} />
     }
   }
 
   return (
     <NavCtx.Provider value={nav}>
-      <div className="app">{fab}{render(current)}</div>
+      <div className="app">{fabs}{render(current)}</div>
     </NavCtx.Provider>
   )
 }

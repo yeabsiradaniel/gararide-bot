@@ -34,6 +34,42 @@ const ICONS: Record<string, ReactNode> = {
   edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></>,
   shield: <><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1Z" /><path d="m9 12 2 2 4-4" /></>,
   thumbsUp: <><path d="M7 10v12" /><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" /></>,
+  moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />,
+  flagET: (
+    <>
+      <clipPath id="et-clip"><rect x="2" y="5" width="20" height="14" rx="3" /></clipPath>
+      <g clipPath="url(#et-clip)">
+        <rect x="2" y="5" width="20" height="4.67" fill="#0DA200" stroke="none" />
+        <rect x="2" y="9.67" width="20" height="4.66" fill="#FED100" stroke="none" />
+        <rect x="2" y="14.33" width="20" height="4.67" fill="#D21034" stroke="none" />
+        <circle cx="12" cy="12" r="2.3" fill="#0066B2" stroke="none" />
+        <polygon points="12,10.3 12.4,11.5 13.6,11.5 12.6,12.2 13,13.4 12,12.7 11,13.4 11.4,12.2 10.4,11.5 11.6,11.5" fill="#FED100" stroke="none" />
+      </g>
+      <rect x="2" y="5" width="20" height="14" rx="3" fill="none" stroke="rgba(0,0,0,0.18)" strokeWidth={1} />
+    </>
+  ),
+  flagUS: (
+    <>
+      <clipPath id="us-clip"><rect x="2" y="5" width="20" height="14" rx="3" /></clipPath>
+      <g clipPath="url(#us-clip)">
+        <rect x="2" y="5" width="20" height="14" fill="#ffffff" stroke="none" />
+        <rect x="2" y="5" width="20" height="2" fill="#C4361C" stroke="none" />
+        <rect x="2" y="8.8" width="20" height="1.8" fill="#C4361C" stroke="none" />
+        <rect x="2" y="12.4" width="20" height="1.8" fill="#C4361C" stroke="none" />
+        <rect x="2" y="16" width="20" height="3" fill="#C4361C" stroke="none" />
+        <rect x="2" y="5" width="9" height="7.5" fill="#1A3B8B" stroke="none" />
+        <circle cx="4.2" cy="6.8" r="0.6" fill="#fff" stroke="none" />
+        <circle cx="6.5" cy="6.8" r="0.6" fill="#fff" stroke="none" />
+        <circle cx="8.8" cy="6.8" r="0.6" fill="#fff" stroke="none" />
+        <circle cx="5.3" cy="8.7" r="0.6" fill="#fff" stroke="none" />
+        <circle cx="7.7" cy="8.7" r="0.6" fill="#fff" stroke="none" />
+        <circle cx="4.2" cy="10.6" r="0.6" fill="#fff" stroke="none" />
+        <circle cx="6.5" cy="10.6" r="0.6" fill="#fff" stroke="none" />
+        <circle cx="8.8" cy="10.6" r="0.6" fill="#fff" stroke="none" />
+      </g>
+      <rect x="2" y="5" width="20" height="14" rx="3" fill="none" stroke="rgba(0,0,0,0.18)" strokeWidth={1} />
+    </>
+  ),
   thumbsDown: <><path d="M17 14V2" /><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" /></>,
 }
 

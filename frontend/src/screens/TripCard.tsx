@@ -49,13 +49,13 @@ export default function TripCard({ card, onGone }: { card: Card; onGone?: () => 
   return (
     <Screen eyebrow={fmtWhen(card.depart_at)} title={card.bay}>
       {onWay && (
-        <div className="card spread" style={{ background: 'var(--surface)', borderColor: 'transparent' }}>
+        <div className="card card--surface spread">
           <span className="row" style={{ gap: 8 }}><Icon name="steering" size={18} /> <b>{S.onTheWay}</b></span>
           <span className="price">{S.arrivesIn} <Countdown until={onWayEnd} /></span>
         </div>
       )}
       {boarding && (
-        <div className="card spread" style={{ background: 'var(--surface)', borderColor: 'transparent' }}>
+        <div className="card card--surface spread">
           <span className="row" style={{ gap: 8 }}><Icon name="car" size={18} /> <b>{S.driverHere}</b></span>
           <span className="price">{S.boardWithin.replace(':', '')} <Countdown until={boardEnd} /></span>
         </div>
@@ -78,7 +78,7 @@ export default function TripCard({ card, onGone }: { card: Card; onGone?: () => 
         </div>
 
         <div className="spread">
-          <span className="row" style={{ gap: 8 }}><Icon name="pin" size={18} style={{ color: 'var(--green)' }} /> {loc(card.dest_name_am, card.dest_name_en)}</span>
+          <span className="row" style={{ gap: 8 }}><Icon name="pin" size={18} style={{ color: 'var(--green-text)' }} /> {loc(card.dest_name_am, card.dest_name_en)}</span>
           <span className="price price--xl" style={{ fontSize: 26 }}>{fmtMoney(card.fare)}</span>
         </div>
         <div className="tiny muted">{S.payInCar('')}</div>

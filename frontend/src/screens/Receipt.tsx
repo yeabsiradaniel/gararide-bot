@@ -46,7 +46,7 @@ export default function Receipt({ ride }: { ride: HistoryRide }) {
             <div style={{ fontWeight: 800, fontSize: 18 }}>{ride.driver_name}</div>
             {ride.driver_tower && <div className="muted tiny">{S.towerWord} {ride.driver_tower}</div>}
           </div>
-          <span className="badge" style={warm ? { background: '#FFE9DE', color: 'var(--sunset)' } : undefined}>{statusLabel}</span>
+          <span className={`badge ${warm ? 'badge--sunset' : ''}`}>{statusLabel}</span>
         </div>
 
         <div className="row muted" style={{ gap: 8, borderTop: '1px solid var(--line-soft)', paddingTop: 14 }}>
@@ -54,10 +54,10 @@ export default function Receipt({ ride }: { ride: HistoryRide }) {
         </div>
 
         <div className="spread">
-          <span className="row" style={{ gap: 8 }}><Icon name="pin" size={18} style={{ color: 'var(--green)' }} /> {loc(ride.dest_name_am, ride.dest_name_en)}</span>
+          <span className="row" style={{ gap: 8 }}><Icon name="pin" size={18} style={{ color: 'var(--green-text)' }} /> {loc(ride.dest_name_am, ride.dest_name_en)}</span>
           <span className="price price--xl" style={{ fontSize: 26 }}>{fmtMoney(ride.fare)}</span>
         </div>
-        {ride.paid && <div className="row tiny" style={{ gap: 6, color: 'var(--green)' }}><Icon name="check" size={14} /> {S.paid}</div>}
+        {ride.paid && <div className="row tiny" style={{ gap: 6, color: 'var(--green-text)' }}><Icon name="check" size={14} /> {S.paid}</div>}
       </div>
 
       {ride.status === 'completed' && (

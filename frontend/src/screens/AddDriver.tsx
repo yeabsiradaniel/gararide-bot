@@ -120,7 +120,7 @@ export default function AddDriver({ edit }: { edit?: RosterDriver }) {
         </button>
       </div>
 
-      {err && <div className="card" style={{ color: 'var(--sunset)' }}>{err}</div>}
+      {err && <div className="card" style={{ color: 'var(--danger)' }}>{err}</div>}
 
       <div className="sticky-actions">
         <button className="btn btn--grad" disabled={!ready || busy} onClick={submit}>

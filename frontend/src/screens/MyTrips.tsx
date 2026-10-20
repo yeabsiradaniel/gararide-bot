@@ -84,7 +84,7 @@ export default function MyTrips() {
                 const paidCount = t.passengers.filter((p) => p.paid).length
                 return (
                   <div className="spread" style={{ borderTop: '1px solid var(--line)', paddingTop: 10 }}>
-                    <span className="row" style={{ gap: 7, color: 'var(--green)' }}><Icon name="chart" size={16} /> {S.collected}</span>
+                    <span className="row" style={{ gap: 7, color: 'var(--green-text)' }}><Icon name="chart" size={16} /> {S.collected}</span>
                     <span><span className="price">{fmtMoney(collected)}</span> <span className="tiny muted">· {S.ofPaid(paidCount, t.passengers.length)}</span></span>
                   </div>
                 )

@@ -67,6 +67,17 @@ app = create_app(conn, _bot_token, admin_ids=_admins, lifespan=_lifespan)
 # Production: hand out a fresh connection per request (see deps.get_conn).
 app.state.db_path = _db_path
 
+
+@app.middleware("http")
+async def _no_cache_html(request, call_next):
+    resp = await call_next(request)
+    if request.url.path in ("/", "/index.html"):
+        resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        resp.headers["Pragma"] = "no-cache"
+        resp.headers["Expires"] = "0"
+    return resp
+
+
 # Serve the built Mini App (Plan 2 produces frontend/dist). Mounted last so the
 # API routes above take precedence.
 if os.path.isdir("frontend/dist"):

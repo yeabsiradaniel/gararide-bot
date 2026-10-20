@@ -24,6 +24,7 @@ interface TgWebApp {
   setBackgroundColor?(color: string): void
   showConfirm?(message: string, callback: (ok: boolean) => void): void
   showAlert?(message: string, callback?: () => void): void
+  onEvent?(eventType: string, eventHandler: () => void): void
   BackButton: BackButton
   HapticFeedback?: Haptic
 }
@@ -33,12 +34,33 @@ declare global {
 
 export const tg = window.Telegram?.WebApp
 
+export function syncTheme(): void {
+  try {
+    let mode: 'light' | 'dark'
+    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('gararide_theme') : null
+    if (saved === 'light' || saved === 'dark') {
+      mode = saved
+    } else {
+      mode = tg?.colorScheme === 'dark' || (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'
+    }
+    document.documentElement.dataset.theme = mode
+    if (document.body) document.body.dataset.theme = mode
+    if (mode === 'dark') {
+      tg?.setHeaderColor?.('#081B09')
+      tg?.setBackgroundColor?.('#081B09')
+    } else {
+      tg?.setHeaderColor?.('#0DA200')
+      tg?.setBackgroundColor?.('#FBFEF9')
+    }
+  } catch { /* running outside Telegram */ }
+}
+
 export function initTelegram(): void {
   try {
     tg?.ready()
     tg?.expand()
-    tg?.setHeaderColor?.('#0DA200')
-    tg?.setBackgroundColor?.('#FBFEF9')
+    syncTheme()
+    tg?.onEvent?.('themeChanged', syncTheme)
   } catch { /* running outside Telegram */ }
 }
 
